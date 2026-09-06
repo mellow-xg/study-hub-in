@@ -116,9 +116,13 @@ export default function HomePage() {
     );
   }
 
-  const filteredCourses = courses.filter((c) =>
-    c.title.toLowerCase().includes(searchTerm.toLowerCase())
+ const filteredCourses = courses.filter((c) => {
+  const term = searchTerm.toLowerCase();
+  return (
+    c.title.toLowerCase().includes(term) ||
+    (c.keywords && c.keywords.toLowerCase().includes(term))
   );
+});
 
   return (
     <div className="min-h-screen dark:bg-[#0e0e17]">
