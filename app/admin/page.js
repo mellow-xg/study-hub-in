@@ -148,7 +148,7 @@ export default function AdminPage() {
               className="w-full border dark:border-gray-600 dark:bg-[#14141f] dark:text-gray-100 rounded-2xl px-4 py-2.5 text-sm"
               required
             />
-            <textarea
+               <textarea
               placeholder="Description"
               value={courseForm.description}
               onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
