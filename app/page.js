@@ -11,6 +11,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [progressByCourse, setProgressByCourse] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains("dark");
@@ -115,6 +116,10 @@ export default function HomePage() {
     );
   }
 
+  const filteredCourses = courses.filter((c) =>
+    c.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen dark:bg-[#0e0e17]">
       <nav className="bg-white/80 dark:bg-[#1c1c2b]/80 backdrop-blur-md shadow-sm px-6 py-4 flex justify-between items-center sticky top-0 z-10">
@@ -151,12 +156,33 @@ export default function HomePage() {
             <p className="text-sm text-gray-500 dark:text-gray-400">Let's keep the streak going.</p>
           </div>
         )}
+
+        <div className="relative mb-5">
+          <input
+            type="text"
+            placeholder="Search courses..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full border dark:border-gray-600 dark:bg-[#1c1c2b] dark:text-gray-100 rounded-full px-5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
         <h2 className="text-lg font-bold text-ink dark:text-gray-100 mb-4">Your Courses</h2>
-        {courses.length === 0 ? (
-          <p className="text-gray-400 text-sm">No courses published yet.</p>
+        {filteredCourses.length === 0 ? (
+          <p className="text-gray-400 text-sm">
+            {searchTerm ? `No courses match "${searchTerm}"` : "No courses published yet."}
+          </p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {courses.map((course) => {
+            {filteredCourses.map((course) => {
               const prog = progressByCourse[course.id] || { total: 0, done: 0, pct: 0 };
               return (
                 <Link
@@ -188,4 +214,4 @@ export default function HomePage() {
       </main>
     </div>
   );
-} 
+}
