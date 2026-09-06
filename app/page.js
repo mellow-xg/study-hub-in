@@ -12,6 +12,7 @@ export default function HomePage() {
   const [darkMode, setDarkMode] = useState(false);
   const [progressByCourse, setProgressByCourse] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
+  const [continueItem, setContinueItem] = useState(null);
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains("dark");
@@ -64,7 +65,7 @@ export default function HomePage() {
         if (chapterIds.length > 0) {
           const { data } = await supabase
             .from("resources")
-            .select("id, chapter_id")
+            .select("id, chapter_id, title")
             .in("chapter_id", chapterIds)
             .eq("status", "published");
           resourceData = data || [];
@@ -72,10 +73,12 @@ export default function HomePage() {
 
         const totalByCourse = {};
         const resourceToCourse = {};
+        const resourceLookup = {};
         resourceData.forEach((r) => {
           const courseId = chapterToCourse[r.chapter_id];
           totalByCourse[courseId] = (totalByCourse[courseId] || 0) + 1;
           resourceToCourse[r.id] = courseId;
+          resourceLookup[r.id] = r;
         });
 
         const { data: progressData } = await supabase
@@ -96,6 +99,25 @@ export default function HomePage() {
           merged[c.id] = { total, done, pct: total > 0 ? Math.round((done / total) * 100) : 0 };
         });
         setProgressByCourse(merged);
+
+        const { data: lastActivity } = await supabase
+          .from("last_activity")
+          .select("resource_id, opened_at")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (lastActivity && resourceLookup[lastActivity.resource_id]) {
+          const res = resourceLookup[lastActivity.resource_id];
+          const courseId = resourceToCourse[res.id];
+          const course = courseData.find((c) => c.id === courseId);
+          if (course) {
+            setContinueItem({
+              resourceTitle: res.title,
+              courseTitle: course.title,
+              courseSlug: course.slug
+            });
+          }
+        }
       }
 
       setLoading(false);
@@ -116,13 +138,13 @@ export default function HomePage() {
     );
   }
 
- const filteredCourses = courses.filter((c) => {
-  const term = searchTerm.toLowerCase();
-  return (
-    c.title.toLowerCase().includes(term) ||
-    (c.keywords && c.keywords.toLowerCase().includes(term))
-  );
-});
+  const filteredCourses = courses.filter((c) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      c.title.toLowerCase().includes(term) ||
+      (c.keywords && c.keywords.toLowerCase().includes(term))
+    );
+  });
 
   return (
     <div className="min-h-screen dark:bg-[#0e0e17]">
@@ -159,6 +181,19 @@ export default function HomePage() {
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">Let's keep the streak going.</p>
           </div>
+        )}
+
+        {continueItem && (
+          <Link
+            href={`/courses/${continueItem.courseSlug}`}
+            className="block bg-brand-gradient rounded-3xl p-5 mb-6 text-white shadow-lg shadow-accent/30"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide opacity-80 mb-1">
+              Continue where you left off
+            </p>
+            <p className="font-bold">{continueItem.resourceTitle}</p>
+            <p className="text-sm opacity-90">{continueItem.courseTitle}</p>
+          </Link>
         )}
 
         <div className="relative mb-5">
