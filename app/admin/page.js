@@ -51,7 +51,7 @@ export default function AdminPage() {
     init();
   }, [router]);
 
-  async function handleCreateCourse(e) {
+   async function handleCreateCourse(e) {
     e.preventDefault();
     setMessage("");
     const cleanSlug = courseForm.slug.trim().toLowerCase().replace(/\s+/g, "-");
@@ -59,12 +59,13 @@ export default function AdminPage() {
       title: courseForm.title.trim(),
       slug: cleanSlug,
       description: courseForm.description.trim(),
+      keywords: courseForm.keywords.trim(),
       status: "published"
     });
     if (error) setMessage(error.message);
     else {
       setMessage("Course created 🎉");
-      setCourseForm({ title: "", slug: "", description: "" });
+      setCourseForm({ title: "", slug: "", description: "", keywords: "" });
       loadCourses();
     }
   }
