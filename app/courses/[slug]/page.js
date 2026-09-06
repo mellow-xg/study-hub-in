@@ -130,9 +130,15 @@ export default function CoursePage() {
     }
   }
 
-  function openResource(res) {
+    function openResource(res) {
     setIframeLoading(true);
     setActiveResource(res);
+    if (userId) {
+      supabase
+        .from("last_activity")
+        .upsert({ user_id: userId, resource_id: res.id, opened_at: new Date().toISOString() })
+        .then(() => {});
+    }
   }
 
   if (loading) {
