@@ -13,7 +13,7 @@ export default function AdminPage() {
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedChapter, setSelectedChapter] = useState("");
 
-  const [courseForm, setCourseForm] = useState({ title: "", slug: "", description: "" });
+  const [courseForm, setCourseForm] = useState({ title: "", slug: "", description: "", keywords: "" });
   const [chapterForm, setChapterForm] = useState({ title: "", position: 1 });
   const [resourceForm, setResourceForm] = useState({ title: "", type: "video", url: "", position: 1 });
   const [message, setMessage] = useState("");
