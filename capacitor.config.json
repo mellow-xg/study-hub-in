@@ -1,0 +1,8 @@
+{
+  "appId": "com.studyhub.app",
+  "appName": "Study Hub",
+  "server": {
+    "url": "https://study-hub-in-vert.vercel.app/",
+    "cleartext": false
+  }
+}
