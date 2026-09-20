@@ -1,4 +1,5 @@
 import "./globals.css";
+import StudyHubGestures from "../components/StudyHubGestures";
 
 export const metadata = {
   title: "Study Hub",
@@ -20,7 +21,9 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <StudyHubGestures>{children}</StudyHubGestures>
+      </body>
     </html>
   );
 }
