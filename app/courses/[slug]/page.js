@@ -138,7 +138,10 @@ export default function CoursePage() {
       <nav className="bg-white/80 dark:bg-[#1c1c2b]/80 backdrop-blur-md shadow-sm px-6 py-4 sticky top-0 z-10">
         <div className="flex items-center gap-4 mb-2">
           <Link href="/" className="text-sm text-accent font-semibold">← Back</Link>
-          <h1 className="text-lg font-extrabold text-ink dark:text-gray-100">{course.title}</h1>
+          <h1 className="text-lg font-extrabold text-ink dark:text-gray-100 flex-1">{course.title}</h1>
+          {quizzes.length > 0 && (
+            <a href="#course-quizzes" className="shrink-0 rounded-full bg-brand-gradient text-white px-3 py-1.5 text-xs font-bold shadow-sm">🧠 Quizzes</a>
+          )}
         </div>
         {totalResources > 0 && <div className="progress-track h-2 w-full"><div className="progress-fill" style={{ width: `${donePct}%` }} /></div>}
       </nav>
@@ -165,20 +168,31 @@ export default function CoursePage() {
         ))}
 
         {quizzes.length > 0 && (
-          <div className="bg-white dark:bg-[#1c1c2b] rounded-3xl shadow-sm p-5">
-            <h2 className="font-bold text-ink dark:text-gray-100 mb-3">Quizzes</h2>
-            <div className="space-y-2">
+          <section id="course-quizzes" className="scroll-mt-24 bg-white dark:bg-[#1c1c2b] rounded-3xl shadow-sm p-5 border border-accent/20">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🧠</span>
+                  <h2 className="font-bold text-lg text-ink dark:text-gray-100">Course Quizzes</h2>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{quizzes.length} quiz{quizzes.length === 1 ? "" : "zes"} available for this course</p>
+              </div>
+            </div>
+            <div className="space-y-3">
               {quizzes.map((q) => {
                 const best = bestByQuiz[q.id];
-                return <Link key={q.id} href={`/quiz/${q.id}`} className="w-full flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#25253a] transition">
-                  <span className="text-xs uppercase tracking-wide text-accent font-bold w-14 shrink-0">Quiz</span>
-                  <span className="flex-1 text-ink dark:text-gray-100">{q.title}</span>
+                return <Link key={q.id} href={`/quiz/${q.id}`} className="w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#25253a] transition group">
+                  <span className="w-10 h-10 rounded-2xl bg-brand-gradient-soft flex items-center justify-center text-lg shrink-0">📝</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block font-semibold text-ink dark:text-gray-100 truncate">{q.title}</span>
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">Open quiz →</span>
+                  </span>
                   {q.status !== "published" && <span className="text-xs font-semibold text-amber-600 dark:text-amber-300 shrink-0">Draft</span>}
                   {best && <span className="text-xs font-semibold text-accent shrink-0">Best {best.score}/{best.total}</span>}
                 </Link>;
               })}
             </div>
-          </div>
+          </section>
         )}
       </main>
 
