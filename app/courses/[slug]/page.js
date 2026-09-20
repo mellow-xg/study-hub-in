@@ -131,12 +131,23 @@ export default function CoursePage() {
       const { data, error } = await supabase.functions.invoke("get-resource-access", {
         body: { resource_id: res.id },
       });
-      if (error || !data?.url) {
+      if (error || !data) {
         console.error("Resource access error:", error);
         setIframeLoading(false);
         return;
       }
-      setActiveResource({ ...res, url: data.url, access: data.access, expires_at: data.expires_at });
+
+      // Keep the temporary token behind the Study Hub domain so users never see
+      // the internal Supabase stream endpoint or the original Drive URL.
+      let resourceUrl = data.url;
+      if (data.access === "temporary" && data.token) {
+        resourceUrl = `/api/document?token=${encodeURIComponent(data.token)}`;
+      }
+      if (!resourceUrl) {
+        setIframeLoading(false);
+        return;
+      }
+      setActiveResource({ ...res, url: resourceUrl, access: data.access, expires_at: data.expires_at });
       if (userId) {
         supabase.from("last_activity").upsert({
           user_id: userId,
