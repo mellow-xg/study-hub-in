@@ -52,6 +52,7 @@ export default function CoursePage() {
   const [bestByQuiz, setBestByQuiz] = useState({});
   const [loading, setLoading] = useState(true);
   const [gestureResource, setGestureResource] = useState(null);
+  const [resourceLoading, setResourceLoading] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -81,7 +82,7 @@ export default function CoursePage() {
 
       if (chapterData?.length) {
         const chapterIds = chapterData.map((c) => c.id);
-        const { data: resourceData } = await supabase.from("resources").select("*").in("chapter_id", chapterIds).eq("status", "published").order("position", { ascending: true });
+        const { data: resourceData } = await supabase.from("resources").select("id,chapter_id,title,description,type,thumbnail_url,position,status,created_at,updated_at").in("chapter_id", chapterIds).eq("status", "published").order("position", { ascending: true });
         const grouped = {};
         (resourceData || []).forEach((r) => {
           if (!grouped[r.chapter_id]) grouped[r.chapter_id] = [];
@@ -121,10 +122,34 @@ export default function CoursePage() {
     }
   }
 
-  function openResource(res) {
+  async function openResource(res) {
+    if (resourceLoading) return;
+    setResourceLoading(true);
     setIframeLoading(true);
-    setActiveResource(res);
-    if (userId) supabase.from("last_activity").upsert({ user_id: userId, resource_id: res.id, opened_at: new Date().toISOString() }).then(() => {});
+    try {
+      // Resolve Google Drive server-side and return only a short-lived proxy URL.
+      const { data, error } = await supabase.functions.invoke("get-resource-access", {
+        body: { resource_id: res.id },
+      });
+      if (error || !data?.url) {
+        console.error("Resource access error:", error);
+        setIframeLoading(false);
+        return;
+      }
+      setActiveResource({ ...res, url: data.url, access: data.access, expires_at: data.expires_at });
+      if (userId) {
+        supabase.from("last_activity").upsert({
+          user_id: userId,
+          resource_id: res.id,
+          opened_at: new Date().toISOString(),
+        }).then(() => {});
+      }
+    } catch (error) {
+      console.error("Resource access request failed:", error);
+      setIframeLoading(false);
+    } finally {
+      setResourceLoading(false);
+    }
   }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-400 dark:bg-[#0e0e17]">Loading...</div>;
