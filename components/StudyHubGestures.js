@@ -9,10 +9,14 @@ const LONG_PRESS_MS = 650;
 export default function StudyHubGestures({ children }) {
   const touch = useRef(null);
   const longPressTimer = useRef(null);
-  const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({ x: null, y: null });
+  const ballRef = useRef(null);
+  const controlsRef = useRef(null);
   const dragging = useRef(false);
   const dragMoved = useRef(false);
+  const dragFrame = useRef(null);
+  const pendingPosition = useRef(null);
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState(null);
 
   useEffect(() => {
     const clearLongPress = () => {
@@ -31,8 +35,6 @@ export default function StudyHubGestures({ children }) {
       touch.current = {
         x: point.clientX,
         y: point.clientY,
-        startY: point.clientY,
-        startX: point.clientX,
         resource,
         cancelled: false,
       };
@@ -43,15 +45,13 @@ export default function StudyHubGestures({ children }) {
         longPressTimer.current = setTimeout(() => {
           const current = touch.current;
           if (!current || current.cancelled) return;
-          if (Math.abs(point.clientX - current.x) < 20 && Math.abs(point.clientY - current.y) < 20) {
-            navigator.vibrate?.(20);
-            window.dispatchEvent(new CustomEvent("studyhub:longpress", {
-              detail: {
-                resourceId: resource.dataset.gestureResource,
-                resourceTitle: resource.dataset.gestureResourceTitle || "",
-              },
-            }));
-          }
+          navigator.vibrate?.(20);
+          window.dispatchEvent(new CustomEvent("studyhub:longpress", {
+            detail: {
+              resourceId: resource.dataset.gestureResource,
+              resourceTitle: resource.dataset.gestureResourceTitle || "",
+            },
+          }));
         }, LONG_PRESS_MS);
       }
     };
@@ -105,51 +105,52 @@ export default function StudyHubGestures({ children }) {
       document.removeEventListener("touchmove", onTouchMove);
       document.removeEventListener("touchend", onTouchEnd);
       document.removeEventListener("touchcancel", onTouchCancel);
+      if (dragFrame.current) cancelAnimationFrame(dragFrame.current);
     };
   }, []);
 
-  const goBack = () => {
-    setOpen(false);
-    window.history.back();
-  };
-
-  const goForward = () => {
-    setOpen(false);
-    window.history.forward();
-  };
-
-  const refresh = () => {
-    setOpen(false);
-    window.location.reload();
-  };
-
-  const home = () => {
-    setOpen(false);
-    window.location.assign("/");
-  };
+  const goBack = () => { setOpen(false); window.history.back(); };
+  const goForward = () => { setOpen(false); window.history.forward(); };
+  const refresh = () => { setOpen(false); window.location.reload(); };
+  const home = () => { setOpen(false); window.location.assign("/"); };
 
   const startDrag = (event) => {
     event.preventDefault();
     event.stopPropagation();
     dragging.current = true;
     dragMoved.current = false;
+
     const move = (e) => {
       if (!dragging.current) return;
       dragMoved.current = true;
-      const px = e.clientX;
-      const py = e.clientY;
-      setPosition({
-        x: Math.min(Math.max(px - 28, 8), window.innerWidth - 64),
-        y: Math.min(Math.max(py - 28, 8), window.innerHeight - 64),
-      });
+
+      const x = Math.min(Math.max(e.clientX - 27, 8), window.innerWidth - 62);
+      const y = Math.min(Math.max(e.clientY - 27, 8), window.innerHeight - 62);
+      pendingPosition.current = { x, y };
+
+      if (!dragFrame.current) {
+        dragFrame.current = requestAnimationFrame(() => {
+          dragFrame.current = null;
+          const p = pendingPosition.current;
+          if (!p || !ballRef.current) return;
+          ballRef.current.style.transform = `translate3d(${p.x}px,${p.y}px,0)`;
+        });
+      }
     };
+
     const end = () => {
       dragging.current = false;
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+
+      const p = pendingPosition.current;
+      if (p) setPosition(p);
     };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", end);
+
+    window.addEventListener("pointermove", move, { passive: true });
+    window.addEventListener("pointerup", end, { once: true });
+    window.addEventListener("pointercancel", end, { once: true });
   };
 
   const toggle = () => {
@@ -157,35 +158,31 @@ export default function StudyHubGestures({ children }) {
     dragMoved.current = false;
   };
 
-  const style = position.x == null
-    ? { right: "14px", bottom: "calc(96px + env(safe-area-inset-bottom))" }
-    : { left: position.x, top: position.y };
+  const positionStyle = position
+    ? { left: 0, top: 0, transform: `translate3d(${position.x}px,${position.y}px,0)` }
+    : { right: 14, bottom: "calc(96px + env(safe-area-inset-bottom))" };
 
   return (
     <>
       {children}
+
       <div
+        ref={controlsRef}
         aria-label="Study Hub controls"
         style={{
           position: "fixed",
           zIndex: 2147483647,
-          ...style,
+          ...positionStyle,
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-end",
           gap: 8,
           pointerEvents: "none",
+          willChange: "transform",
         }}
       >
         {open && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              pointerEvents: "auto",
-            }}
-          >
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, pointerEvents: "auto" }}>
             {[
               ["←", "Back", goBack],
               ["→", "Forward", goForward],
@@ -203,12 +200,14 @@ export default function StudyHubGestures({ children }) {
                   height: 46,
                   borderRadius: 999,
                   border: "1px solid rgba(255,255,255,.2)",
-                  background: "rgba(18,18,24,.92)",
+                  background: "rgba(18,18,24,.94)",
                   color: "#fff",
                   boxShadow: "0 6px 20px rgba(0,0,0,.35)",
                   fontSize: 21,
                   cursor: "pointer",
                   backdropFilter: "blur(10px)",
+                  WebkitBackdropFilter: "blur(10px)",
+                  WebkitTapHighlightColor: "transparent",
                 }}
               >
                 {icon}
@@ -218,6 +217,7 @@ export default function StudyHubGestures({ children }) {
         )}
 
         <button
+          ref={ballRef}
           type="button"
           aria-label={open ? "Close Study Hub controls" : "Open Study Hub controls"}
           title="Study Hub controls — drag to move"
@@ -228,17 +228,19 @@ export default function StudyHubGestures({ children }) {
             touchAction: "none",
             width: 54,
             height: 54,
+            padding: 0,
             borderRadius: 999,
             border: "2px solid rgba(255,255,255,.28)",
             background: open ? "rgba(35,35,45,.96)" : "rgba(20,20,28,.94)",
             color: "#fff",
             boxShadow: "0 8px 28px rgba(0,0,0,.42)",
             fontSize: 24,
-            cursor: "grab",
+            cursor: dragging.current ? "grabbing" : "grab",
             display: "grid",
             placeItems: "center",
             userSelect: "none",
             WebkitUserSelect: "none",
+            WebkitTapHighlightColor: "transparent",
           }}
         >
           {open ? "×" : "☰"}
