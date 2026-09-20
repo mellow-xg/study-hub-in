@@ -18,6 +18,12 @@ export default function StudyHubGestures({ children }) {
   const [position, setPosition] = useState(null);
 
   useEffect(() => {
+    const closeOnOutsidePointer = (event) => {
+      if (!open || !controlsRef.current) return;
+      if (!controlsRef.current.contains(event.target)) setOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsidePointer, true);
     const clearLongPress = () => {
       if (longPressTimer.current) {
         clearTimeout(longPressTimer.current);
@@ -100,7 +106,16 @@ export default function StudyHubGestures({ children }) {
       document.removeEventListener("touchcancel", onTouchCancel);
       if (dragFrame.current) cancelAnimationFrame(dragFrame.current);
     };
-  }, []);
+    return () => {
+      clearLongPress();
+      document.removeEventListener("pointerdown", closeOnOutsidePointer, true);
+      document.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+      document.removeEventListener("touchcancel", onTouchCancel);
+      if (dragFrame.current) cancelAnimationFrame(dragFrame.current);
+    };
+  }, [open]);
 
   const goBack = () => { setOpen(false); window.history.back(); };
   const goForward = () => { setOpen(false); window.history.forward(); };
