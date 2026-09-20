@@ -9,12 +9,11 @@ const LONG_PRESS_MS = 650;
 export default function StudyHubGestures({ children }) {
   const touch = useRef(null);
   const longPressTimer = useRef(null);
-  const ballRef = useRef(null);
   const controlsRef = useRef(null);
   const dragging = useRef(false);
   const dragMoved = useRef(false);
   const dragFrame = useRef(null);
-  const pendingPosition = useRef(null);
+  const dragStart = useRef(null);
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState(null);
 
@@ -32,13 +31,7 @@ export default function StudyHubGestures({ children }) {
       const target = event.target instanceof Element ? event.target : null;
       const resource = target?.closest("[data-gesture-resource]");
 
-      touch.current = {
-        x: point.clientX,
-        y: point.clientY,
-        resource,
-        cancelled: false,
-      };
-
+      touch.current = { x: point.clientX, y: point.clientY, resource, cancelled: false };
       clearLongPress();
 
       if (resource) {
@@ -120,32 +113,51 @@ export default function StudyHubGestures({ children }) {
     dragging.current = true;
     dragMoved.current = false;
 
-    const move = (e) => {
-      if (!dragging.current) return;
-      dragMoved.current = true;
+    const rect = controlsRef.current?.getBoundingClientRect();
+    if (!rect) return;
 
-      const x = Math.min(Math.max(e.clientX - 27, 8), window.innerWidth - 62);
-      const y = Math.min(Math.max(e.clientY - 27, 8), window.innerHeight - 62);
-      pendingPosition.current = { x, y };
+    dragStart.current = {
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      left: rect.left,
+      top: rect.top,
+    };
+
+    const move = (e) => {
+      if (!dragging.current || !dragStart.current || !controlsRef.current) return;
+      const d = dragStart.current;
+      const x = Math.min(Math.max(d.left + e.clientX - d.pointerX, 8), window.innerWidth - 62);
+      const y = Math.min(Math.max(d.top + e.clientY - d.pointerY, 8), window.innerHeight - 62);
+      dragMoved.current = Math.abs(e.clientX - d.pointerX) > 4 || Math.abs(e.clientY - d.pointerY) > 4;
 
       if (!dragFrame.current) {
         dragFrame.current = requestAnimationFrame(() => {
           dragFrame.current = null;
-          const p = pendingPosition.current;
-          if (!p || !ballRef.current) return;
-          ballRef.current.style.transform = `translate3d(${p.x}px,${p.y}px,0)`;
+          const r = controlsRef.current;
+          if (!r || !dragStart.current) return;
+          const now = dragStart.current;
+          const dx = e.clientX - now.pointerX;
+          const dy = e.clientY - now.pointerY;
+          r.style.transform = `translate3d(${dx}px,${dy}px,0)`;
         });
       }
     };
 
-    const end = () => {
+    const end = (e) => {
+      const d = dragStart.current;
       dragging.current = false;
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", end);
       window.removeEventListener("pointercancel", end);
 
-      const p = pendingPosition.current;
-      if (p) setPosition(p);
+      if (d) {
+        const x = Math.min(Math.max(d.left + e.clientX - d.pointerX, 8), window.innerWidth - 62);
+        const y = Math.min(Math.max(d.top + e.clientY - d.pointerY, 8), window.innerHeight - 62);
+        if (dragMoved.current) setPosition({ x, y });
+      }
+
+      if (controlsRef.current) controlsRef.current.style.transform = "translate3d(0,0,0)";
+      dragStart.current = null;
     };
 
     window.addEventListener("pointermove", move, { passive: true });
@@ -159,7 +171,7 @@ export default function StudyHubGestures({ children }) {
   };
 
   const positionStyle = position
-    ? { left: 0, top: 0, transform: `translate3d(${position.x}px,${position.y}px,0)` }
+    ? { left: position.x, top: position.y }
     : { right: 14, bottom: "calc(96px + env(safe-area-inset-bottom))" };
 
   return (
@@ -179,6 +191,7 @@ export default function StudyHubGestures({ children }) {
           gap: 8,
           pointerEvents: "none",
           willChange: "transform",
+          transform: "translate3d(0,0,0)",
         }}
       >
         {open && (
@@ -196,15 +209,11 @@ export default function StudyHubGestures({ children }) {
                 aria-label={label}
                 title={label}
                 style={{
-                  width: 46,
-                  height: 46,
-                  borderRadius: 999,
+                  width: 46, height: 46, borderRadius: 999,
                   border: "1px solid rgba(255,255,255,.2)",
-                  background: "rgba(18,18,24,.94)",
-                  color: "#fff",
+                  background: "rgba(18,18,24,.94)", color: "#fff",
                   boxShadow: "0 6px 20px rgba(0,0,0,.35)",
-                  fontSize: 21,
-                  cursor: "pointer",
+                  fontSize: 21, cursor: "pointer",
                   backdropFilter: "blur(10px)",
                   WebkitBackdropFilter: "blur(10px)",
                   WebkitTapHighlightColor: "transparent",
@@ -217,7 +226,6 @@ export default function StudyHubGestures({ children }) {
         )}
 
         <button
-          ref={ballRef}
           type="button"
           aria-label={open ? "Close Study Hub controls" : "Open Study Hub controls"}
           title="Study Hub controls — drag to move"
@@ -226,20 +234,15 @@ export default function StudyHubGestures({ children }) {
           style={{
             pointerEvents: "auto",
             touchAction: "none",
-            width: 54,
-            height: 54,
-            padding: 0,
+            width: 54, height: 54, padding: 0,
             borderRadius: 999,
             border: "2px solid rgba(255,255,255,.28)",
             background: open ? "rgba(35,35,45,.96)" : "rgba(20,20,28,.94)",
             color: "#fff",
             boxShadow: "0 8px 28px rgba(0,0,0,.42)",
-            fontSize: 24,
-            cursor: dragging.current ? "grabbing" : "grab",
-            display: "grid",
-            placeItems: "center",
-            userSelect: "none",
-            WebkitUserSelect: "none",
+            fontSize: 24, cursor: "grab",
+            display: "grid", placeItems: "center",
+            userSelect: "none", WebkitUserSelect: "none",
             WebkitTapHighlightColor: "transparent",
           }}
         >
