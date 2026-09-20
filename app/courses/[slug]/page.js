@@ -54,6 +54,8 @@ export default function CoursePage() {
   const [activeResource, setActiveResource] = useState(null);
   const [iframeLoading, setIframeLoading] = useState(false);
   const [completedIds, setCompletedIds] = useState(new Set());
+  const [quizzes, setQuizzes] = useState([]);
+  const [bestByQuiz, setBestByQuiz] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -85,6 +87,27 @@ export default function CoursePage() {
         .eq("status", "published")
         .order("position", { ascending: true });
       setChapters(chapterData || []);
+
+      const { data: quizData } = await supabase
+        .from("quizzes")
+        .select("id, title, status")
+        .eq("course_id", courseData.id)
+        .order("created_at", { ascending: true });
+      setQuizzes(quizData || []);
+
+      if (quizData && quizData.length > 0) {
+        const { data: attemptData } = await supabase
+          .from("quiz_attempts")
+          .select("quiz_id, score, total")
+          .eq("user_id", user.id)
+          .in("quiz_id", quizData.map((q) => q.id));
+        const best = {};
+        (attemptData || []).forEach((a) => {
+          const prev = best[a.quiz_id];
+          if (!prev || a.score / a.total > prev.score / prev.total) best[a.quiz_id] = a;
+        });
+        setBestByQuiz(best);
+      }
 
       if (chapterData && chapterData.length > 0) {
         const chapterIds = chapterData.map((c) => c.id);
@@ -214,6 +237,35 @@ export default function CoursePage() {
             </div>
           </div>
         ))}
+
+        {quizzes.length > 0 && (
+          <div className="bg-white dark:bg-[#1c1c2b] rounded-3xl shadow-sm p-5">
+            <h2 className="font-bold text-ink dark:text-gray-100 mb-3">Quizzes</h2>
+            <div className="space-y-2">
+              {quizzes.map((q) => {
+                const best = bestByQuiz[q.id];
+                return (
+                  <Link
+                    key={q.id}
+                    href={`/quiz/${q.id}`}
+                    className="w-full flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#25253a] transition"
+                  >
+                    <span className="text-xs uppercase tracking-wide text-accent font-bold w-14 shrink-0">Quiz</span>
+                    <span className="flex-1 text-ink dark:text-gray-100">{q.title}</span>
+                    {q.status !== "published" && (
+                      <span className="text-xs font-semibold text-amber-600 dark:text-amber-300 shrink-0">Draft</span>
+                    )}
+                    {best && (
+                      <span className="text-xs font-semibold text-accent shrink-0">
+                        Best {best.score}/{best.total}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </main>
 
       {activeResource && (
