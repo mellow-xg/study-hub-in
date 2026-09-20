@@ -21,6 +21,8 @@ export default function HomePage() {
   const [progressByCourse, setProgressByCourse] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
+  const [semester, setSemester] = useState(() => localStorage.getItem("studyhub_semester") || "1");
+  const [branch, setBranch] = useState(() => localStorage.getItem("studyhub_branch") || "ALL");
   const [continueItem, setContinueItem] = useState(null);
   const [quizSummary, setQuizSummary] = useState({ total: 0, attempted: 0, best: 0 });
   const [recentItems, setRecentItems] = useState([]);
@@ -156,9 +158,13 @@ export default function HomePage() {
     router.push("/login");
   }
 
+  useEffect(() => { localStorage.setItem("studyhub_semester", semester); }, [semester]);
+  useEffect(() => { localStorage.setItem("studyhub_branch", branch); }, [branch]);
+
   const filteredCourses = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     return courses.filter((course) => {
+      const matchesAcademic = String(course.semester || "") === semester && (course.branch === "ALL" || course.branch === branch);
       const matchesSearch = !term ||
         course.title?.toLowerCase().includes(term) ||
         course.keywords?.toLowerCase().includes(term);
@@ -167,7 +173,7 @@ export default function HomePage() {
         filter === "all" ||
         (filter === "active" && progress > 0 && progress < 100) ||
         (filter === "completed" && progress >= 100);
-      return matchesSearch && matchesFilter;
+      return matchesAcademic && matchesSearch && matchesFilter;
     });
   }, [courses, progressByCourse, searchTerm, filter]);
 
@@ -275,6 +281,21 @@ export default function HomePage() {
                 onChange={(e) => setSearchTerm(e.target.value)} className="search-box pl-10" />
             </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-4">
+              <select value={semester} onChange={(e) => setSemester(e.target.value)} className="search-box">
+                {Array.from({ length: 8 }, (_, i) => <option key={i + 1} value={String(i + 1)}>Semester {i + 1}</option>)}
+              </select>
+              <select value={branch} onChange={(e) => setBranch(e.target.value)} className="search-box">
+                <option value="ALL">All branches</option>
+                <option value="CSE">CSE</option>
+                <option value="AIML">AIML</option>
+                <option value="CIVIL">Civil</option>
+                <option value="EEE">Electrical</option>
+                <option value="ME">Mechanical</option>
+                <option value="ECE">ECE</option>
+              </select>
+            </div>
 
           <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
             {[["all", "All"], ["active", "In progress"], ["completed", "Completed"]].map(([value, label]) => (
