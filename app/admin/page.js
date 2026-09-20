@@ -13,7 +13,7 @@ export default function AdminPage() {
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedChapter, setSelectedChapter] = useState("");
 
-  const [courseForm, setCourseForm] = useState({ title: "", slug: "", description: "", keywords: "" });
+  const [courseForm, setCourseForm] = useState({ title: "", slug: "", description: "", keywords: "", semester: 1, branch: "ALL" });
   const [chapterForm, setChapterForm] = useState({ title: "", position: 1 });
   const [resourceForm, setResourceForm] = useState({ title: "", type: "video", url: "", position: 1 });
   const [message, setMessage] = useState("");
@@ -60,12 +60,14 @@ export default function AdminPage() {
       slug: cleanSlug,
       description: courseForm.description.trim(),
       keywords: courseForm.keywords.trim(),
+      semester: Number(courseForm.semester),
+      branch: courseForm.branch,
       status: "published"
     });
     if (error) setMessage(error.message);
     else {
       setMessage("Course created 🎉");
-      setCourseForm({ title: "", slug: "", description: "", keywords: "" });
+      setCourseForm({ title: "", slug: "", description: "", keywords: "", semester: 1, branch: "ALL" });
       loadCourses();
     }
   }
@@ -154,6 +156,14 @@ export default function AdminPage() {
               onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
               className="w-full border dark:border-gray-600 dark:bg-[#14141f] dark:text-gray-100 rounded-2xl px-4 py-2.5 text-sm"
             />
+            <div className="grid grid-cols-2 gap-3">
+              <select value={courseForm.semester} onChange={(e) => setCourseForm({ ...courseForm, semester: e.target.value })} className="w-full border dark:border-gray-600 dark:bg-[#14141f] dark:text-gray-100 rounded-2xl px-4 py-2.5 text-sm">
+                {Array.from({ length: 8 }, (_, i) => <option key={i + 1} value={i + 1}>Semester {i + 1}</option>)}
+              </select>
+              <select value={courseForm.branch} onChange={(e) => setCourseForm({ ...courseForm, branch: e.target.value })} className="w-full border dark:border-gray-600 dark:bg-[#14141f] dark:text-gray-100 rounded-2xl px-4 py-2.5 text-sm">
+                <option value="ALL">All branches</option><option value="CSE">CSE</option><option value="AIML">AIML</option><option value="CIVIL">Civil</option><option value="EEE">Electrical</option><option value="ME">Mechanical</option><option value="ECE">ECE</option>
+              </select>
+            </div>
             <button className="bg-brand-gradient text-white rounded-2xl px-4 py-2.5 text-sm font-bold shadow-lg shadow-accent/30">
               Create Course
             </button>
