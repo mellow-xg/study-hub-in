@@ -21,8 +21,8 @@ export default function HomePage() {
   const [progressByCourse, setProgressByCourse] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
-  const [semester, setSemester] = useState(() => localStorage.getItem("studyhub_semester") || "1");
-  const [branch, setBranch] = useState(() => localStorage.getItem("studyhub_branch") || "ALL");
+  const [semester, setSemester] = useState("1");
+  const [branch, setBranch] = useState("ALL");
   const [continueItem, setContinueItem] = useState(null);
   const [quizSummary, setQuizSummary] = useState({ total: 0, attempted: 0, best: 0 });
   const [recentItems, setRecentItems] = useState([]);
@@ -158,6 +158,12 @@ export default function HomePage() {
     router.push("/login");
   }
 
+  useEffect(() => {
+    const savedSemester = localStorage.getItem("studyhub_semester");
+    const savedBranch = localStorage.getItem("studyhub_branch");
+    if (savedSemester) setSemester(savedSemester);
+    if (savedBranch) setBranch(savedBranch);
+  }, []);
   useEffect(() => { localStorage.setItem("studyhub_semester", semester); }, [semester]);
   useEffect(() => { localStorage.setItem("studyhub_branch", branch); }, [branch]);
 
