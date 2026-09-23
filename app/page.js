@@ -322,15 +322,15 @@ export default function HomePage() {
                 const prog = progressByCourse[course.id] || { total: 0, done: 0, pct: 0 };
                 return (
                   <Link key={course.id} href={"/courses/" + course.slug} className="course-card course-card-modern group">
-                    <div className="course-visual">
+                    <div className={"course-visual subject-" + (index % 6)}>
                       <div className="course-brand">
                         <span className="course-brand-mark">S</span>
                         <span>Study Hub</span>
                       </div>
                       <span className="course-semester">{course.semester ? `Semester ${course.semester}` : "Course"}</span>
                       <div className="course-illustration" aria-hidden="true">
-                        <span className="course-bulb">💡</span>
-                        <span className="course-chip">⚡</span>
+                        <span className="course-symbol">{index % 6 === 0 ? "∑" : index % 6 === 1 ? "⚡" : index % 6 === 2 ? "⌬" : index % 6 === 3 ? "AI" : index % 6 === 4 ? "⚙" : "⌁"}</span>
+                        <span className="course-orbit">✦</span>
                         <span className="course-grid">⌁</span>
                       </div>
                     </div>
