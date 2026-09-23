@@ -240,7 +240,7 @@ export default function HomePage() {
             <div className="text-4xl font-black text-white">{overallProgress}%</div>
             <div className="text-xs text-white/70 mt-1">overall progress</div>
             <div className="progress-track bg-white/15 h-2 mt-4">
-              <div className="progress-fill" style={{ width: "${overallProgress}%" }} />
+              <div className="progress-fill" style={{ width: `${overallProgress}%` }} />
             </div>
           </div>
         </section>
@@ -321,23 +321,39 @@ export default function HomePage() {
               {filteredCourses.map((course, index) => {
                 const prog = progressByCourse[course.id] || { total: 0, done: 0, pct: 0 };
                 return (
-                  <Link key={course.id} href={"/courses/" + course.slug} className="course-card group">
-                    <div className="course-card-top">
-                      <span className="course-number">{String(index + 1).padStart(2, "0")}</span>
-                      {prog.pct >= 100 ? <span className="complete-pill">✓ Complete</span> :
-                        prog.pct > 0 ? <span className="live-pill">In progress</span> :
-                        <span className="new-pill">Start</span>}
-                    </div>
-                    <h3 className="font-extrabold text-lg leading-snug text-ink dark:text-white line-clamp-3 mt-4">{course.title}</h3>
-                    <div className="mt-5">
-                      <div className="flex justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
-                        <span>{prog.done} of {prog.total} resources</span><span>{prog.pct}%</span>
+                  <Link key={course.id} href={"/courses/" + course.slug} className="course-card course-card-modern group">
+                    <div className="course-visual">
+                      <div className="course-brand">
+                        <span className="course-brand-mark">S</span>
+                        <span>Study Hub</span>
                       </div>
-                      <div className="progress-track h-2"><div className="progress-fill" style={{ width: "${prog.pct}%" }} /></div>
+                      <span className="course-semester">{course.semester ? `Semester ${course.semester}` : "Course"}</span>
+                      <div className="course-illustration" aria-hidden="true">
+                        <span className="course-bulb">💡</span>
+                        <span className="course-chip">⚡</span>
+                        <span className="course-grid">⌁</span>
+                      </div>
                     </div>
-                    <div className="mt-4 flex items-center justify-between text-sm font-bold text-accent">
-                      <span>{prog.pct ? "Continue learning" : "Start course"}</span>
-                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                    <div className="course-card-body">
+                      <div className="course-card-top">
+                        <span className="course-number">{String(index + 1).padStart(2, "0")}</span>
+                        {prog.pct >= 100 ? <span className="complete-pill">✓ Complete</span> :
+                          prog.pct > 0 ? <span className="live-pill">In progress</span> :
+                          <span className="new-pill">Start learning</span>}
+                      </div>
+                      <h3 className="course-title">{course.title}</h3>
+                      <p className="course-description">Build your understanding with lectures, notes, resources and practice material.</p>
+                      <div className="course-meta">
+                        <span>📚 {prog.total || 0} resources</span>
+                        <span>📈 {prog.pct}% complete</span>
+                      </div>
+                      <div className="mt-3">
+                        <div className="progress-track h-2"><div className="progress-fill" style={{ width: `${prog.pct}%` }} /></div>
+                      </div>
+                      <div className="course-cta">
+                        <span>{prog.pct ? "Continue learning" : "Start learning"}</span>
+                        <span className="course-arrow group-hover:translate-x-1">→</span>
+                      </div>
                     </div>
                   </Link>
                 );
