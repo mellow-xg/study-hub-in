@@ -26,6 +26,7 @@ export default function HomePage() {
   const [continueItem, setContinueItem] = useState(null);
   const [quizSummary, setQuizSummary] = useState({ total: 0, attempted: 0, best: 0 });
   const [recentItems, setRecentItems] = useState([]);
+  const [searchIndexByCourse, setSearchIndexByCourse] = useState({});
 
   useEffect(() => {
     setDarkMode(document.documentElement.classList.contains("dark"));
@@ -69,7 +70,7 @@ export default function HomePage() {
         const chapterIds = chapters.map((c) => c.id);
         const chapterToCourse = Object.fromEntries(chapters.map((c) => [c.id, c.course_id]));
         const chapterToTitle = Object.fromEntries(chapters.map((c) => [c.id, c.title]));
-        const searchIndexByCourse = {};
+        const nextSearchIndexByCourse = {};
 
         let resources = [];
         if (chapterIds.length) {
@@ -86,14 +87,16 @@ export default function HomePage() {
           resourceToCourse[r.id] = courseId;
           resourceLookup[r.id] = { ...r, chapterTitle: chapterToTitle[r.chapter_id] || "" };
           const chapterTitle = chapterToTitle[r.chapter_id] || "";
-          searchIndexByCourse[courseId] = [
-            ...(searchIndexByCourse[courseId] ? [searchIndexByCourse[courseId]] : []),
+          nextSearchIndexByCourse[courseId] = [
+            ...(nextSearchIndexByCourse[courseId] ? [nextSearchIndexByCourse[courseId]] : []),
             chapterTitle,
             r.title || "",
             r.type || "",
           ].join(" ");
           totalByCourse[courseId] = (totalByCourse[courseId] || 0) + 1;
         });
+
+        if (active) setSearchIndexByCourse(nextSearchIndexByCourse);
 
         const [{ data: progressData }, { data: lastActivityData }] = await Promise.all([
           supabase.from("progress").select("resource_id").eq("user_id", user.id),
