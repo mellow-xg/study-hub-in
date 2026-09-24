@@ -63,11 +63,13 @@ export default function HomePage() {
 
         const courseIds = publishedCourses.map((c) => c.id);
         const { data: chapterData } = await supabase
-          .from("chapters").select("id, course_id").in("course_id", courseIds).eq("status", "published");
+          .from("chapters").select("id, course_id, title, position").in("course_id", courseIds).eq("status", "published").order("position");
 
         const chapters = chapterData || [];
         const chapterIds = chapters.map((c) => c.id);
         const chapterToCourse = Object.fromEntries(chapters.map((c) => [c.id, c.course_id]));
+        const chapterToTitle = Object.fromEntries(chapters.map((c) => [c.id, c.title]));
+        const searchIndexByCourse = {};
 
         let resources = [];
         if (chapterIds.length) {
@@ -82,7 +84,14 @@ export default function HomePage() {
         resources.forEach((r) => {
           const courseId = chapterToCourse[r.chapter_id];
           resourceToCourse[r.id] = courseId;
-          resourceLookup[r.id] = r;
+          resourceLookup[r.id] = { ...r, chapterTitle: chapterToTitle[r.chapter_id] || "" };
+          const chapterTitle = chapterToTitle[r.chapter_id] || "";
+          searchIndexByCourse[courseId] = [
+            ...(searchIndexByCourse[courseId] ? [searchIndexByCourse[courseId]] : []),
+            chapterTitle,
+            r.title || "",
+            r.type || "",
+          ].join(" ");
           totalByCourse[courseId] = (totalByCourse[courseId] || 0) + 1;
         });
 
@@ -173,7 +182,8 @@ export default function HomePage() {
       const matchesAcademic = String(course.semester || "") === semester && (course.branch === "ALL" || course.branch === branch);
       const matchesSearch = !term ||
         course.title?.toLowerCase().includes(term) ||
-        course.keywords?.toLowerCase().includes(term);
+        course.keywords?.toLowerCase().includes(term) ||
+        searchIndexByCourse[course.id]?.toLowerCase().includes(term);
       const progress = progressByCourse[course.id]?.pct || 0;
       const matchesFilter =
         filter === "all" ||
@@ -283,7 +293,7 @@ export default function HomePage() {
             </div>
             <div className="relative sm:w-72">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">⌕</span>
-              <input type="text" placeholder="Search courses…" value={searchTerm}
+              <input type="text" placeholder="Search courses, chapters, or resources…" value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)} className="search-box pl-10" />
             </div>
           </div>
