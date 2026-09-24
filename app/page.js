@@ -19,6 +19,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [progressByCourse, setProgressByCourse] = useState({});
+  const [resourceCountByCourse, setResourceCountByCourse] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
   const [semester, setSemester] = useState("1");
@@ -96,7 +97,10 @@ export default function HomePage() {
           totalByCourse[courseId] = (totalByCourse[courseId] || 0) + 1;
         });
 
-        if (active) setSearchIndexByCourse(nextSearchIndexByCourse);
+        if (active) {
+          setSearchIndexByCourse(nextSearchIndexByCourse);
+          setResourceCountByCourse(totalByCourse);
+        }
 
         const [{ data: progressData }, { data: lastActivityData }] = await Promise.all([
           supabase.from("progress").select("resource_id").eq("user_id", user.id),
@@ -357,7 +361,7 @@ export default function HomePage() {
                       <h3 className="course-title">{course.title}</h3>
                       <p className="course-description">Build your understanding with lectures, notes, resources and practice material.</p>
                       <div className="course-meta">
-                        <span>📚 {prog.total || 0} resources</span>
+                        <span>📚 {resourceCountByCourse[course.id] ?? 0} resources</span>
                         <span>📈 {prog.pct}% complete</span>
                       </div>
                       <div className="mt-3">
