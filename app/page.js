@@ -232,8 +232,8 @@ export default function HomePage() {
             </div>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="desktop-links"><a href="#courses">Courses</a><Link href="/quizzes">Quizzes</Link><Link href="/study-tools">Study tools</Link></div>
-            <Link href="/help" className="compact-action hidden sm:inline-flex">Help</Link>
+            <div className="desktop-links"><a href="#courses">Courses</a><Link href="/quizzes">Quizzes</Link><Link href="/study-tools">Study tools</Link><Link href="/profile">Profile</Link></div>
+            <Link href="/profile" className="compact-action hidden sm:inline-flex">Profile</Link>
             <button onClick={toggleDarkMode} className="icon-button" aria-label="Toggle theme">{darkMode ? "☀️" : "🌙"}</button>
             {profile?.role === "admin" && <Link href="/admin" className="hidden sm:inline-flex compact-action">Admin</Link>}
             <button onClick={handleSignOut} className="compact-action hidden sm:inline-flex">Sign out</button>
@@ -415,7 +415,7 @@ export default function HomePage() {
         <a href="#courses"><span>📚</span><small>Courses</small></a>
         <Link href="/quizzes"><span>🧠</span><small>Quizzes</small></Link>
         <Link href="/study-tools"><span>★</span><small>Tools</small></Link>
-        <Link href="/help"><span>?</span><small>Help</small></Link>
+        <Link href="/profile"><span>◉</span><small>Profile</small></Link>
       </nav>
     </div>
   );
