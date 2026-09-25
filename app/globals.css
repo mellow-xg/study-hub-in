@@ -228,3 +228,9 @@ html.dark .rule-valid { color:#88dfbd; } html.dark .rule-pending { color:#b1c2bd
 .profile-field input:focus { border-color:var(--brand);box-shadow:0 0 0 3px rgba(15,118,110,.15); }
 .profile-submit { display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 22px;border-radius:12px;background:#176f67;color:white;font-weight:800;font-size:.86rem; }
 .profile-submit:disabled { opacity:.6;cursor:wait; }
+.skip-link { position:fixed;z-index:100;left:12px;top:12px;transform:translateY(-160%);background:#fff;color:#114b53;padding:10px 15px;border-radius:9px;font-weight:800; }
+.skip-link:focus { transform:translateY(0); }
+.site-footer { border-top:1px solid var(--line);background:var(--surface); }
+.footer-inner { max-width:72rem;margin:auto;padding:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;color:var(--muted);font-size:.8rem;font-weight:600; }
+.footer-inner div { display:flex;gap:18px; }.footer-inner a:hover { color:var(--brand); }
+@media (max-width:640px) { .site-footer { border:0;background:transparent; }.footer-inner { display:none; } }

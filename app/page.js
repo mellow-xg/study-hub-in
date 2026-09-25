@@ -222,17 +222,19 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen app-shell pb-24">
-      <nav className="sticky top-0 z-30 border-b border-black/5 dark:border-white/5 bg-white/75 dark:bg-[#11111d]/80 backdrop-blur-xl">
+      <a href="#main-content" className="skip-link">Skip to main content</a>
+      <header>
+      <nav aria-label="Main navigation" className="sticky top-0 z-30 border-b border-black/5 dark:border-white/5 bg-white/75 dark:bg-[#11111d]/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <span className="brand-orb brand-orb-sm">S</span>
             <div>
-              <h1 className="text-base font-black tracking-tight text-ink dark:text-white">Study Hub</h1>
+              <span className="block text-base font-black tracking-tight text-ink dark:text-white">Study Hub</span>
               <p className="text-[10px] text-gray-500 dark:text-gray-400 -mt-0.5">Your learning space</p>
             </div>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="desktop-links"><a href="#courses">Courses</a><Link href="/quizzes">Quizzes</Link><Link href="/study-tools">Study tools</Link><Link href="/profile">Profile</Link></div>
+            <div className="desktop-links"><a href="#courses">Courses</a><Link href="/quizzes">Quizzes</Link><Link href="/study-tools">Study tools</Link></div>
             <Link href="/profile" className="compact-action hidden sm:inline-flex">Profile</Link>
             <button onClick={toggleDarkMode} className="icon-button" aria-label="Toggle theme">{darkMode ? "☀️" : "🌙"}</button>
             {profile?.role === "admin" && <Link href="/admin" className="hidden sm:inline-flex compact-action">Admin</Link>}
@@ -240,14 +242,15 @@ export default function HomePage() {
           </div>
         </div>
       </nav>
+      </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <main id="main-content" className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <section className="dashboard-hero mb-6">
           <div className="relative z-10">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70 mb-2">Your learning dashboard</p>
-            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
               Make today count, {profile?.full_name?.split(" ")[0] || "Learner"}.
-            </h2>
+            </h1>
             <p className="text-sm sm:text-base text-white/75 mt-2 max-w-xl">
               A focused place for your lectures, notes, quizzes, and progress. Choose a subject and keep moving.
             </p>
@@ -410,13 +413,16 @@ export default function HomePage() {
         </section>
       </main>
 
-      <nav className="mobile-bottom-nav">
+      <footer className="site-footer">
+        <div className="footer-inner"><span>Study Hub · Learn at your pace</span><div><Link href="/help">Help</Link><Link href="/profile">Profile</Link></div></div>
+      <nav aria-label="Mobile navigation" className="mobile-bottom-nav">
         <Link href="/" className="mobile-nav-active"><span>⌂</span><small>Home</small></Link>
         <a href="#courses"><span>📚</span><small>Courses</small></a>
         <Link href="/quizzes"><span>🧠</span><small>Quizzes</small></Link>
         <Link href="/study-tools"><span>★</span><small>Tools</small></Link>
         <Link href="/profile"><span>◉</span><small>Profile</small></Link>
       </nav>
+      </footer>
     </div>
   );
 }
