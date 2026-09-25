@@ -7,6 +7,7 @@ import { supabase } from "../lib/supabase";
 
 const quickActions = [
   { href: "#courses", icon: "📚", label: "Courses", tone: "violet" },
+  { href: "/study-tools", icon: "★", label: "Study Tools", tone: "violet" },
   { href: "/quizzes", icon: "🧠", label: "Quiz Center", tone: "pink" },
   { href: "#progress", icon: "📈", label: "Progress", tone: "blue" },
   { href: "#recent", icon: "🕘", label: "Recent", tone: "amber" },
@@ -411,6 +412,7 @@ export default function HomePage() {
         <Link href="/" className="mobile-nav-active"><span>⌂</span><small>Home</small></Link>
         <a href="#courses"><span>📚</span><small>Courses</small></a>
         <Link href="/quizzes"><span>🧠</span><small>Quizzes</small></Link>
+        <Link href="/study-tools"><span>★</span><small>Tools</small></Link>
         <a href="#progress"><span>📈</span><small>Progress</small></a>
       </nav>
     </div>

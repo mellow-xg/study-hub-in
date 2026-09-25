@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import BookmarkButton from "../../../components/BookmarkButton";
 import { supabase } from "../../../lib/supabase";
 
 function toEmbedUrl(url) {
@@ -151,7 +152,7 @@ export default function CoursePage() {
     return <div key={res.id} data-gesture-resource={res.id} data-gesture-resource-title={res.title || ""} onClick={() => openResource(res)} className={`w-full text-left flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm cursor-pointer transition ${done ? "bg-brand-gradient-soft border border-accent/30" : "border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#25253a]"}`}>
       <button onClick={(e) => toggleComplete(res.id, e)} className={`w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 ${done ? "bg-brand-gradient text-white" : "border-2 dark:border-gray-500"}`}>{done ? "✓" : ""}</button>
       <span className="text-xs uppercase tracking-wide text-accent font-bold w-14 shrink-0">{res.type === "live" ? "🔴 Live" : res.type}</span>
-      <span className="text-ink dark:text-gray-100">{res.title}</span>
+      <span className="text-ink dark:text-gray-100">{res.title}</span>{userId && <BookmarkButton resourceId={res.id} userId={userId} />}
     </div>;
   };
 

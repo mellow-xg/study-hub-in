@@ -129,3 +129,7 @@ html.dark .mobile-bottom-nav { background:rgba(24,24,36,.9);border-color:rgba(25
   .stat-card { padding:12px 9px; }.stat-card strong { font-size:1rem; }.stat-card > span:last-child { font-size:.6rem; }
   .quiz-promo { display:block; }.mobile-bottom-nav { display:flex; }
 }
+
+:root { --base-font-size: 16px; }
+html { font-size: var(--base-font-size); }
+html.high-contrast { filter: contrast(1.3); }
