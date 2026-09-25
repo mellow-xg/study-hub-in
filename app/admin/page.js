@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../../lib/supabase";
+import LoadingSkeleton from "../../components/LoadingSkeleton";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -109,13 +110,7 @@ export default function AdminPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-400 dark:bg-[#0e0e17]">
-        Loading...
-      </div>
-    );
-  }
+  if (loading) return <LoadingSkeleton variant="profile" label="Loading admin" />;
 
   return (
     <div className="min-h-screen dark:bg-[#0e0e17]">

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import LoadingSkeleton from "../../components/LoadingSkeleton";
 
 export default function QuizCenter() {
   const router = useRouter();
@@ -76,7 +77,7 @@ export default function QuizCenter() {
   const attempted = Object.keys(attempts).length;
   const best = attempted ? Math.max(...Object.values(attempts)) : 0;
 
-  if (loading) return <div className="min-h-screen app-shell flex items-center justify-center text-gray-500">Loading Quiz Center…</div>;
+  if (loading) return <LoadingSkeleton variant="list" label="Loading quizzes" />;
 
   return (
     <div className="min-h-screen app-shell pb-20">

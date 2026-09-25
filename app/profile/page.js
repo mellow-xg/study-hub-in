@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import PasswordChecklist, { isStrongPassword } from "../../components/PasswordChecklist";
+import LoadingSkeleton from "../../components/LoadingSkeleton";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function ProfilePage() {
     } finally { setBusy(false); }
   }
 
-  if (loading) return <main className="min-h-screen app-shell grid place-items-center text-gray-500">Loading profile…</main>;
+  if (loading) return <LoadingSkeleton variant="profile" label="Loading profile" />;
 
   return <main className="min-h-screen app-shell px-4 sm:px-6 py-8 sm:py-12">
     <div className="max-w-3xl mx-auto">

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import BookmarkButton from "../../../components/BookmarkButton";
+import LoadingSkeleton from "../../../components/LoadingSkeleton";
 import { supabase } from "../../../lib/supabase";
 
 function toEmbedUrl(url) {
@@ -140,7 +141,7 @@ export default function CoursePage() {
     } finally { setResourceLoading(false); }
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-400 dark:bg-[#0e0e17]">Loading...</div>;
+  if (loading) return <LoadingSkeleton variant="course" label="Loading course" />;
   if (!course) return <div className="min-h-screen flex items-center justify-center text-gray-400 dark:bg-[#0e0e17]">Course not found.</div>;
 
   const totalResources = allResources.length;

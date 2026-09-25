@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../../../lib/supabase";
+import LoadingSkeleton from "../../../components/LoadingSkeleton";
 
 function parseOptions(options) {
   if (Array.isArray(options)) return options;
@@ -106,13 +107,7 @@ export default function QuizPage() {
     setSaveFailed(false);
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-400 dark:bg-[#0e0e17]">
-        Loading...
-      </div>
-    );
-  }
+  if (loading) return <LoadingSkeleton variant="list" label="Loading quiz" />;
 
   if (!quiz) {
     return (

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../lib/supabase";
+import LoadingSkeleton from "../components/LoadingSkeleton";
 
 const quickActions = [
   { href: "#courses", icon: "📚", label: "Courses", tone: "violet" },
@@ -209,16 +210,7 @@ export default function HomePage() {
     return total ? Math.round((done / total) * 100) : 0;
   }, [progressByCourse]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen app-shell flex items-center justify-center">
-        <div className="text-center">
-          <div className="brand-orb mx-auto mb-4">S</div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Preparing your study space…</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSkeleton variant="dashboard" label="Loading your dashboard" />;
 
   return (
     <div className="min-h-screen app-shell pb-24">

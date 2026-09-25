@@ -6,12 +6,13 @@ import Link from 'next/link';
 export default function StudyToolsPage() {
   const [userId, setUserId] = useState(null);
   const [bookmarks, setBookmarks] = useState([]);
+  const [bookmarksLoading, setBookmarksLoading] = useState(true);
   const [fontSize, setFontSize] = useState(16);
   const [highContrast, setHighContrast] = useState(false);
   const [remindersOn, setRemindersOn] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    supabase.auth.getUser().then(({ data }) => { setUserId(data.user?.id ?? null); if (!data.user) setBookmarksLoading(false); });
     setFontSize(Number(localStorage.getItem('fontSize') || 16));
     setHighContrast(localStorage.getItem('highContrast') === 'true');
     setRemindersOn(localStorage.getItem('remindersOn') === 'true');
@@ -19,11 +20,13 @@ export default function StudyToolsPage() {
 
   useEffect(() => {
     if (!userId) return;
+    let active = true;
     supabase
       .from('bookmarks')
       .select('id, resources(title, chapters(courses(title, slug)))')
       .eq('profile_id', userId)
-      .then(({ data }) => setBookmarks(data || []));
+      .then(({ data }) => { if (active) { setBookmarks(data || []); setBookmarksLoading(false); } });
+    return () => { active = false; };
   }, [userId]);
 
   useEffect(() => {
@@ -61,7 +64,9 @@ export default function StudyToolsPage() {
 
           <section className="tool-panel">
             <h2 className="text-lg font-bold text-ink dark:text-white mb-4">Bookmarks</h2>
-            {bookmarks.length === 0 ? (
+            {bookmarksLoading ? (
+              <div role="status" aria-label="Loading bookmarks" className="space-y-3"><span className="sr-only">Loading bookmarks</span><div className="skeleton skeleton-line w-4/5" /><div className="skeleton skeleton-line w-2/3" /><div className="skeleton skeleton-line w-3/5" /></div>
+            ) : bookmarks.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-white/50">
                 Nothing saved yet — tap the star on any resource to keep it here.
               </p>
