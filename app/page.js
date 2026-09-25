@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../lib/supabase";
 import LoadingSkeleton from "../components/LoadingSkeleton";
+import CourseArtwork, { getCoursePresentation } from "../components/CourseArtwork";
 
 const quickActions = [
   { href: "#courses", icon: "📚", label: "Courses", tone: "violet" },
@@ -333,31 +334,29 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredCourses.map((course, index) => {
+              {filteredCourses.map((course) => {
                 const prog = progressByCourse[course.id] || { total: 0, done: 0, pct: 0 };
+                const presentation = getCoursePresentation(course);
                 return (
                   <Link key={course.id} href={"/courses/" + course.slug} className="course-card course-card-modern group">
-                    <div className={"course-visual subject-" + (index % 6)}>
+                    <div className="course-visual" data-subject={presentation.key}>
                       <div className="course-brand">
                         <span className="course-brand-mark">S</span>
                         <span>Study Hub</span>
                       </div>
                       <span className="course-semester">{course.semester ? `Semester ${course.semester}` : "Course"}</span>
-                      <div className="course-illustration" aria-hidden="true">
-                        <span className="course-symbol">{index % 6 === 0 ? "∑" : index % 6 === 1 ? "⚡" : index % 6 === 2 ? "⌬" : index % 6 === 3 ? "AI" : index % 6 === 4 ? "⚙" : "⌁"}</span>
-                        <span className="course-orbit">✦</span>
-                        <span className="course-grid">⌁</span>
-                      </div>
+                      <span className="course-topic">{presentation.label}</span>
+                      <CourseArtwork type={presentation.key} />
                     </div>
                     <div className="course-card-body">
                       <div className="course-card-top">
-                        <span className="course-number">{String(index + 1).padStart(2, "0")}</span>
+                        <span className="course-number">{presentation.label}</span>
                         {prog.pct >= 100 ? <span className="complete-pill">✓ Complete</span> :
                           prog.pct > 0 ? <span className="live-pill">In progress</span> :
                           <span className="new-pill">Start learning</span>}
                       </div>
                       <h3 className="course-title">{course.title}</h3>
-                      <p className="course-description">Build your understanding with lectures, notes, resources and practice material.</p>
+                      <p className="course-description">{presentation.description}</p>
                       <div className="course-meta">
                         <span>📚 {resourceCountByCourse[course.id] ?? 0} resources</span>
                         <span>📈 {prog.pct}% complete</span>

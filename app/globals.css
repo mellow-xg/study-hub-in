@@ -280,3 +280,32 @@ html.dark .text-accent { color:#c4b5fd; }
 html.dark .bg-brand-gradient { background-image:linear-gradient(135deg,#8b5cf6,#ec4899); }
 .dashboard-hero h1 { font-family:Georgia,serif;font-weight:700;letter-spacing:-.045em;line-height:1.1;max-width:680px; }
 @media (max-width:700px) { .dashboard-hero h1 { font-size:2.15rem; } }
+
+/* Course covers use the subject, independent of sorting and filtering. */
+.course-visual[data-subject] { position:relative;isolation:isolate;background:#285b65; }
+.course-visual[data-subject="electrical"] { background:linear-gradient(120deg,#573d19,#c67c29); }
+.course-visual[data-subject="physics"] { background:linear-gradient(120deg,#234a70,#5784c5); }
+.course-visual[data-subject="mathematics"] { background:linear-gradient(120deg,#194c66,#298c9c); }
+.course-visual[data-subject="ict"] { background:linear-gradient(120deg,#244568,#5c78aa); }
+.course-visual[data-subject="constitution"] { background:linear-gradient(120deg,#773c38,#b76755); }
+.course-visual[data-subject="ai"] { background:linear-gradient(120deg,#443a76,#9276b9); }
+.course-visual[data-subject="books"] { background:linear-gradient(120deg,#3a6347,#72a075); }
+.course-visual[data-subject="notes"] { background:linear-gradient(120deg,#655145,#a78568); }
+.course-visual[data-subject="general"] { background:linear-gradient(120deg,#285b65,#4d8e93); }
+.course-visual[data-subject]::before { inset:auto -46px -132px auto;width:290px;height:290px;border:1px solid rgba(255,255,255,.22);box-shadow:0 0 0 34px rgba(255,255,255,.05),0 0 0 68px rgba(255,255,255,.035); }
+.course-visual[data-subject]::after { content:none; }
+.course-artwork { position:absolute;z-index:2;right:12px;top:30px;width:190px;height:145px;color:#fff;opacity:.94;filter:drop-shadow(0 9px 15px rgba(0,0,0,.18));pointer-events:none; }
+.course-visual[data-subject] .course-brand-mark { background:rgba(255,255,255,.2);box-shadow:none;border:1px solid rgba(255,255,255,.32); }
+.course-topic { position:absolute;z-index:3;left:17px;top:73px;max-width:48%;font-size:.68rem;line-height:1.3;letter-spacing:.12em;font-weight:900;color:#fff;text-shadow:0 2px 9px rgba(0,0,0,.23); }
+.course-visual[data-subject] .course-semester { bottom:15px;left:16px;background:rgba(0,0,0,.16); }
+.course-card-body .course-number { color:var(--brand);font-size:.61rem;letter-spacing:.1em; }
+.course-card-body .course-description { min-height:2.15rem; }
+html.dark .course-visual[data-subject="electrical"] { background:linear-gradient(120deg,#432a18,#8e561f); }
+html.dark .course-visual[data-subject="physics"] { background:linear-gradient(120deg,#1b3052,#415c9c); }
+html.dark .course-visual[data-subject="mathematics"] { background:linear-gradient(120deg,#17394d,#1d6677); }
+html.dark .course-visual[data-subject="ict"] { background:linear-gradient(120deg,#1c304d,#435589); }
+html.dark .course-visual[data-subject="constitution"] { background:linear-gradient(120deg,#592b39,#91435b); }
+html.dark .course-visual[data-subject="ai"] { background:linear-gradient(120deg,#342557,#684193); }
+html.dark .course-visual[data-subject="books"] { background:linear-gradient(120deg,#254734,#3d7350); }
+html.dark .course-visual[data-subject="notes"] { background:linear-gradient(120deg,#49382f,#79604e); }
+@media (max-width:380px) { .course-artwork { width:165px;right:1px; }.course-topic { max-width:50%;font-size:.6rem; } }
