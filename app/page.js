@@ -228,10 +228,12 @@ export default function HomePage() {
             <span className="brand-orb brand-orb-sm">S</span>
             <div>
               <h1 className="text-base font-black tracking-tight text-ink dark:text-white">Study Hub</h1>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 -mt-0.5">Learn. Practice. Progress.</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 -mt-0.5">Your learning space</p>
             </div>
           </Link>
           <div className="flex items-center gap-2">
+            <div className="desktop-links"><a href="#courses">Courses</a><Link href="/quizzes">Quizzes</Link><Link href="/study-tools">Study tools</Link></div>
+            <Link href="/help" className="compact-action hidden sm:inline-flex">Help</Link>
             <button onClick={toggleDarkMode} className="icon-button" aria-label="Toggle theme">{darkMode ? "☀️" : "🌙"}</button>
             {profile?.role === "admin" && <Link href="/admin" className="hidden sm:inline-flex compact-action">Admin</Link>}
             <button onClick={handleSignOut} className="compact-action hidden sm:inline-flex">Sign out</button>
@@ -244,10 +246,10 @@ export default function HomePage() {
           <div className="relative z-10">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70 mb-2">Your learning dashboard</p>
             <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-              Hey, {profile?.full_name?.split(" ")[0] || "Learner"} 👋
+              Make today count, {profile?.full_name?.split(" ")[0] || "Learner"}.
             </h2>
             <p className="text-sm sm:text-base text-white/75 mt-2 max-w-xl">
-              Pick up where you left off, test yourself, or explore a course.
+              A focused place for your lectures, notes, quizzes, and progress. Choose a subject and keep moving.
             </p>
             <div className="flex flex-wrap gap-2 mt-5">
               <Link href="/quizzes" className="hero-button">🧠 Take a quiz</Link>
@@ -278,7 +280,7 @@ export default function HomePage() {
           </section>
         )}
 
-        <section className="grid grid-cols-4 gap-2 sm:gap-3 mb-7">
+        <section className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
           {quickActions.map((item) => (
             <Link key={item.label} href={item.href} className="quick-card">
               <span className={"quick-icon quick-" + item.tone}>{item.icon}</span>
@@ -413,7 +415,7 @@ export default function HomePage() {
         <a href="#courses"><span>📚</span><small>Courses</small></a>
         <Link href="/quizzes"><span>🧠</span><small>Quizzes</small></Link>
         <Link href="/study-tools"><span>★</span><small>Tools</small></Link>
-        <a href="#progress"><span>📈</span><small>Progress</small></a>
+        <Link href="/help"><span>?</span><small>Help</small></Link>
       </nav>
     </div>
   );

@@ -126,7 +126,8 @@ export default function AdminPage() {
         <h1 className="text-lg font-extrabold text-ink dark:text-gray-100">Admin</h1>
       </nav>
 
-      <main className="max-w-2xl mx-auto px-6 py-8 space-y-6">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <div className="page-intro"><p className="section-label">CONTENT STUDIO</p><h2 className="text-3xl font-black text-ink dark:text-white">Build your library</h2><p className="text-gray-500 dark:text-gray-400 mt-2">Create a course, add its chapters, then publish learning resources.</p></div>
         {message && (
           <p className="text-sm font-semibold text-accent bg-brand-gradient-soft p-3 rounded-2xl">
             {message}

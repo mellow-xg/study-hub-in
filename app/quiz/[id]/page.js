@@ -148,7 +148,7 @@ export default function QuizPage() {
         )}
       </nav>
 
-      <main className="max-w-3xl mx-auto px-6 py-8 space-y-4">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-4">
         {quiz.status !== "published" && (
           <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-xs px-4 py-2">
             Draft preview. Only admins can see this quiz.

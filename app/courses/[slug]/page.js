@@ -162,7 +162,8 @@ export default function CoursePage() {
       {totalResources > 0 && <div className="progress-track h-2 w-full"><div className="progress-fill" style={{ width: `${donePct}%` }} /></div>}
     </nav>
 
-    <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+    <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <div className="page-intro"><p className="section-label">COURSE LIBRARY</p><h2 className="text-2xl sm:text-3xl font-black text-ink dark:text-white">{course.title}</h2><p className="text-gray-500 dark:text-gray-400 mt-2">{totalResources} resources to explore · {donePct}% complete</p></div>
       {lectures.length > 0 && <div className="bg-white dark:bg-[#1c1c2b] rounded-3xl shadow-sm p-5">
         <div className="flex items-center justify-between mb-3"><h2 className="font-bold text-ink dark:text-gray-100">Lectures</h2><span className="text-xs font-semibold text-accent">{lectures.length} {lectures.length === 1 ? "lecture" : "lectures"}</span></div>
         <div className="space-y-2">{lectures.map(resourceRow)}</div>

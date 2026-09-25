@@ -50,16 +50,17 @@ export default function StudyToolsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white dark:bg-[#0e0e17] px-5 py-8 max-w-md mx-auto">
+    <main className="study-tools-page min-h-screen app-shell px-4 sm:px-6 py-8 sm:py-12">
+      <div className="max-w-4xl mx-auto">
       <Link href="/" className="text-accent text-sm">← Home</Link>
-      <h1 className="text-2xl font-semibold text-ink dark:text-white mb-8">Your study tools</h1>
+      <p className="section-label mt-8">PERSONAL WORKSPACE</p>
+      <h1 className="text-3xl sm:text-4xl font-black text-ink dark:text-white mb-2">Your study tools</h1>
+      <p className="text-gray-500 dark:text-gray-400 mb-8">Keep useful resources close and make reading comfortable.</p>
 
-      <div className="flex gap-6">
-        <div className="w-px bg-gray-200 dark:bg-gray-700 shrink-0" />
-        <div className="flex-1 space-y-10">
+      <div className="study-tools-grid">
 
-          <section>
-            <h2 className="text-sm font-medium text-gray-500 dark:text-white/60 mb-3">Bookmarks</h2>
+          <section className="tool-panel">
+            <h2 className="text-lg font-bold text-ink dark:text-white mb-4">Bookmarks</h2>
             {bookmarks.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-white/50">
                 Nothing saved yet — tap the star on any resource to keep it here.
@@ -85,8 +86,8 @@ export default function StudyToolsPage() {
             )}
           </section>
 
-          <section>
-            <h2 className="text-sm font-medium text-gray-500 dark:text-white/60 mb-3">Reminders</h2>
+          <section className="tool-panel">
+            <h2 className="text-lg font-bold text-ink dark:text-white mb-4">Reminders</h2>
             <label className="flex items-center justify-between text-sm text-ink dark:text-white">
               Daily study nudge
               <input
@@ -98,8 +99,8 @@ export default function StudyToolsPage() {
             </label>
           </section>
 
-          <section>
-            <h2 className="text-sm font-medium text-gray-500 dark:text-white/60 mb-3">Display</h2>
+          <section className="tool-panel">
+            <h2 className="text-lg font-bold text-ink dark:text-white mb-4">Display</h2>
             <label htmlFor="fontSize" className="block text-sm text-ink dark:text-white mb-1">
               Text size — {fontSize}px
             </label>
@@ -123,7 +124,7 @@ export default function StudyToolsPage() {
             </label>
           </section>
 
-        </div>
+      </div>
       </div>
     </main>
   );

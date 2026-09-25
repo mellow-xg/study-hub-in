@@ -119,14 +119,14 @@ export default function QuizCenter() {
             const course = courses[quiz.course_id];
             const score = attempts[quiz.id];
             return (
-              <Link key={quiz.id} href={`/quiz/${quiz.id}`} className="course-card flex items-center gap-4 group">
+              <Link key={quiz.id} href={`/quiz/${quiz.id}`} className="quiz-list-card course-card flex items-center gap-4 group">
                 <div className="continue-icon flex-shrink-0 text-lg">🧠</div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-purple-500 mb-1">{course?.title || "Study Hub"}</p>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-accent mb-1">{course?.title || "Study Hub"}</p>
                   <h3 className="font-extrabold text-base text-ink dark:text-white leading-snug">{quiz.title}</h3>
                   <p className="text-xs text-gray-500 mt-1">{score !== undefined ? `Best score: ${score}%` : "Not attempted yet"}</p>
                 </div>
-                <span className="text-purple-500 font-black group-hover:translate-x-1 transition-transform">→</span>
+                <span className="text-accent font-black group-hover:translate-x-1 transition-transform">→</span>
               </Link>
             );
           })}
