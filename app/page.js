@@ -8,11 +8,9 @@ import LoadingSkeleton from "../components/LoadingSkeleton";
 import CourseArtwork, { getCoursePresentation } from "../components/CourseArtwork";
 
 const quickActions = [
-  { href: "#courses", icon: "📚", label: "Courses", tone: "violet" },
-  { href: "/study-tools", icon: "★", label: "Study Tools", tone: "violet" },
-  { href: "/quizzes", icon: "🧠", label: "Quiz Center", tone: "pink" },
-  { href: "#progress", icon: "📈", label: "Progress", tone: "blue" },
-  { href: "#recent", icon: "🕘", label: "Recent", tone: "amber" },
+  { href: "#courses", icon: "▤", label: "Courses", tone: "violet" },
+  { href: "/study-tools", icon: "✳", label: "Study tools", tone: "violet" },
+  { href: "/quizzes", icon: "⌁", label: "Quiz center", tone: "pink" },
 ];
 
 export default function HomePage() {
@@ -238,24 +236,19 @@ export default function HomePage() {
       </header>
 
       <main id="main-content" className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <section className="dashboard-hero mb-6">
+        <section className="dashboard-hero dashboard-hero-compact mb-7">
           <div className="relative z-10">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70 mb-2">Your learning dashboard</p>
-            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-              Make today count, {profile?.full_name?.split(" ")[0] || "Learner"}.
+            <p className="dashboard-eyebrow">YOUR LEARNING SPACE <span aria-hidden="true">·</span> SEMESTER {semester}</p>
+            <h1 className="dashboard-title">
+              Good to see you, {profile?.full_name?.split(" ")[0] || "Learner"}.
             </h1>
-            <p className="text-sm sm:text-base text-white/75 mt-2 max-w-xl">
-              A focused place for your lectures, notes, quizzes, and progress. Choose a subject and keep moving.
+            <p className="dashboard-subtitle">
+              Small steps add up. Pick up where you left off or explore a subject.
             </p>
-            <div className="flex flex-wrap gap-2 mt-5">
-              <Link href="/quizzes" className="hero-button">🧠 Take a quiz</Link>
-              <a href="#courses" className="hero-button hero-button-muted">📚 Browse courses</a>
-            </div>
           </div>
-          <div className="hero-progress">
-            <div className="text-4xl font-black text-white">{overallProgress}%</div>
-            <div className="text-xs text-white/70 mt-1">overall progress</div>
-            <div className="progress-track bg-white/15 h-2 mt-4">
+          <div className="hero-progress hero-progress-compact" aria-label={`${overallProgress}% overall progress`}>
+            <div className="hero-progress-line"><span>Overall progress</span><strong>{overallProgress}%</strong></div>
+            <div className="progress-track h-2 mt-3">
               <div className="progress-fill" style={{ width: `${overallProgress}%` }} />
             </div>
           </div>
@@ -276,7 +269,7 @@ export default function HomePage() {
           </section>
         )}
 
-        <section className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
+        <section aria-label="Study shortcuts" className="grid grid-cols-3 gap-3 mb-8">
           {quickActions.map((item) => (
             <Link key={item.label} href={item.href} className="quick-card">
               <span className={"quick-icon quick-" + item.tone}>{item.icon}</span>
@@ -285,7 +278,7 @@ export default function HomePage() {
           ))}
         </section>
 
-        <section id="progress" className="grid grid-cols-3 gap-3 mb-8">
+        <section id="progress" aria-label="Your study overview" className="grid grid-cols-3 gap-3 mb-8">
           <div className="stat-card"><span className="stat-icon">📚</span><strong>{courses.length}</strong><span>Courses</span></div>
           <div className="stat-card"><span className="stat-icon">🧠</span><strong>{quizSummary.attempted}/{quizSummary.total}</strong><span>Quizzes done</span></div>
           <div className="stat-card"><span className="stat-icon">🏆</span><strong>{quizSummary.best}%</strong><span>Best score</span></div>
@@ -295,20 +288,20 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4">
             <div>
               <div className="section-label">YOUR LIBRARY</div>
-              <h2 className="text-2xl font-black text-ink dark:text-white">Courses</h2>
+              <h2 className="text-2xl font-black text-ink dark:text-white">Your courses</h2>
             </div>
             <div className="relative sm:w-72">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">⌕</span>
-              <input type="text" placeholder="Search courses, chapters, or resources…" value={searchTerm}
+              <input type="search" aria-label="Search courses" placeholder="Search courses, chapters, or resources…" value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)} className="search-box pl-10" />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 mb-4">
-              <select value={semester} onChange={(e) => setSemester(e.target.value)} className="search-box">
+          <div className="course-controls mb-4">
+              <select aria-label="Filter by semester" value={semester} onChange={(e) => setSemester(e.target.value)} className="search-box">
                 {Array.from({ length: 8 }, (_, i) => <option key={i + 1} value={String(i + 1)}>Semester {i + 1}</option>)}
               </select>
-              <select value={branch} onChange={(e) => setBranch(e.target.value)} className="search-box">
+              <select aria-label="Filter by branch" value={branch} onChange={(e) => setBranch(e.target.value)} className="search-box">
                 <option value="ALL">All branches</option>
                 <option value="CSE">CSE</option>
                 <option value="AIML">AIML</option>
