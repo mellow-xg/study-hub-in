@@ -4,11 +4,11 @@
 begin;
 
 alter default privileges for role postgres in schema public
-  revoke select, insert, update, delete on tables from anon, authenticated, service_role;
+  revoke select, insert, update, delete on tables from anon, authenticated;
 alter default privileges for role postgres in schema public
-  revoke execute on functions from public, anon, authenticated, service_role;
+  revoke execute on functions from public, anon, authenticated;
 alter default privileges for role postgres in schema public
-  revoke usage, select, update on sequences from anon, authenticated, service_role;
+  revoke usage, select, update on sequences from anon, authenticated;
 
 revoke all on all tables in schema public from anon;
 revoke all on all sequences in schema public from anon;
