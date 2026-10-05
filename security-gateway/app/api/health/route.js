@@ -1,0 +1,1 @@
+export async function GET(){return Response.json({ok:true,service:"study-hub-security"},{headers:{"Cache-Control":"no-store"}})}
