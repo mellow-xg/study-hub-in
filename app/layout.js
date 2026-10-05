@@ -1,5 +1,6 @@
 import "./globals.css";
 import StudyHubGestures from "../components/StudyHubGestures";
+import InactivityLogout from "../components/InactivityLogout";
 
 export const metadata = {
   title: "Study Hub",
@@ -22,7 +23,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <StudyHubGestures>{children}</StudyHubGestures>
+        <InactivityLogout><StudyHubGestures>{children}</StudyHubGestures></InactivityLogout>
       </body>
     </html>
   );
