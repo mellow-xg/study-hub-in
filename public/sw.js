@@ -8,7 +8,11 @@ const APP_SHELL = ["/", "/offline"];
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(APP_CACHE)
-      .then((cache) => cache.addAll(APP_SHELL))
+      .then(async (cache) => {
+        for (const path of APP_SHELL) {
+          try { await cache.add(path); } catch {}
+        }
+      })
       .then(() => self.skipWaiting())
   );
 });
