@@ -3,7 +3,7 @@ const APP_CACHE = CACHE_VERSION + "-app";
 const FILE_CACHE = CACHE_VERSION + "-files";
 const MAX_FILE_ENTRIES = 30;
 
-const APP_SHELL = ["/", "/help", "/study-tools"];
+const APP_SHELL = ["/", "/offline"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -103,7 +103,7 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(async () => {
           const cached = await caches.match(request);
-          return cached || caches.match("/");
+          return cached || caches.match("/offline");
         })
     );
   }
