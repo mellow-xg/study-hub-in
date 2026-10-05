@@ -26,5 +26,6 @@ jobs:
       - name: Production build
         run: npm run build
         env:
+          # Public browser configuration; CI must not depend on a repository secret.
           NEXT_PUBLIC_SUPABASE_URL: https://ofbjgijvwjzedpczzxvi.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-build-placeholder
