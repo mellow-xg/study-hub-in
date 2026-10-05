@@ -10,8 +10,10 @@ const ACTIVITY_EVENTS = ["pointerdown", "pointermove", "keydown", "scroll", "tou
 export default function InactivityLogout({ children }) {
   const idleTimer = useRef(null);
   const logoutTimer = useRef(null);
+  const scheduleRef = useRef(null);
   const [warning, setWarning] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(120);
+  const warningRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -19,6 +21,7 @@ export default function InactivityLogout({ children }) {
     const clearTimers = () => {
       if (idleTimer.current) clearTimeout(idleTimer.current);
       if (logoutTimer.current) clearTimeout(logoutTimer.current);
+      if (logoutTimer.countdown) clearInterval(logoutTimer.countdown);
       idleTimer.current = null;
       logoutTimer.current = null;
     };
@@ -28,7 +31,13 @@ export default function InactivityLogout({ children }) {
       idleTimer.current = setTimeout(() => {
         if (!mounted) return;
         setWarning(true);
+        warningRef.current = true;
         setSecondsLeft(120);
+
+        const countdown = setInterval(() => {
+          setSecondsLeft((value) => Math.max(0, value - 1));
+        }, 1000);
+        logoutTimer.countdown = countdown;
 
         logoutTimer.current = setTimeout(async () => {
           await supabase.auth.signOut();
@@ -37,8 +46,10 @@ export default function InactivityLogout({ children }) {
       }, IDLE_MS);
     };
 
+    scheduleRef.current = schedule;
+
     const onActivity = () => {
-      if (warning) return;
+      if (warningRef.current) return;
       schedule();
     };
 
@@ -51,7 +62,7 @@ export default function InactivityLogout({ children }) {
       if (!mounted) return;
       if (session) schedule();
       else clearTimers();
-      if (!session) setWarning(false);
+      if (!session) { setWarning(false); warningRef.current = false; }
     });
 
     for (const event of ACTIVITY_EVENTS) {
@@ -64,13 +75,15 @@ export default function InactivityLogout({ children }) {
       listener.subscription.unsubscribe();
       for (const event of ACTIVITY_EVENTS) window.removeEventListener(event, onActivity);
     };
-  }, [warning]);
+  }, []);
 
   async function continueSession() {
     // Refresh the Supabase session before restarting the inactivity window.
     await supabase.auth.getSession();
     setWarning(false);
+    warningRef.current = false;
     setSecondsLeft(120);
+    scheduleRef.current?.();
   }
 
   if (!warning) return children;
