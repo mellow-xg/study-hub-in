@@ -97,3 +97,5 @@ create policy "No client access to security audit logs" on public.security_audit
   for all to anon, authenticated using (false) with check (false);
 
 commit;
+
+-- Preview deployments require the Vercel preview Supabase configuration; production values remain unchanged.
