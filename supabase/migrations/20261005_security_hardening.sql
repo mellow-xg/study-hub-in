@@ -99,3 +99,47 @@ create policy "No client access to security audit logs" on public.security_audit
 commit;
 
 -- Preview deployments require the Vercel preview Supabase configuration; production values remain unchanged.
+
+-- Quiz submission is intentionally SECURITY DEFINER so grading can read correct_option.
+-- It authenticates the caller, checks the published course, caps input size, and rate-limits attempts.
+create or replace function public.submit_quiz_attempt(p_quiz_id uuid, p_answers jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+declare
+  v_user uuid := (select auth.uid());
+  v_total integer;
+  v_score integer;
+  v_attempt_id uuid;
+begin
+  if v_user is null then raise exception 'Authentication required'; end if;
+  if not public.consume_security_rate_limit('quiz_submit:' || v_user::text, 20, 600) then
+    raise exception 'Too many quiz attempts. Try again later.';
+  end if;
+  if not exists (
+    select 1 from public.quizzes q
+    left join public.courses c on c.id = q.course_id
+    where q.id = p_quiz_id
+      and q.status = 'published'::public.publish_status
+      and (q.course_id is null or c.status = 'published'::public.publish_status)
+  ) then raise exception 'Quiz not available'; end if;
+  if jsonb_typeof(p_answers) <> 'array' then raise exception 'Answers must be an array'; end if;
+  if jsonb_array_length(p_answers) > 200 then raise exception 'Too many answers'; end if;
+  select count(*)::integer into v_total from public.quiz_questions qq where qq.quiz_id = p_quiz_id;
+  if v_total <= 0 then raise exception 'Quiz has no questions'; end if;
+  select count(*)::integer into v_score
+  from public.quiz_questions qq
+  join lateral (
+    select value::integer as answer
+    from jsonb_array_elements(p_answers) with ordinality as a(value, position)
+    where position = qq.position + 1 limit 1
+  ) a on true
+  where qq.quiz_id = p_quiz_id and a.answer = qq.correct_option;
+  insert into public.quiz_attempts(user_id, quiz_id, score, total)
+  values (v_user, p_quiz_id, v_score, v_total)
+  returning id into v_attempt_id;
+  return jsonb_build_object('attempt_id', v_attempt_id, 'score', v_score, 'total', v_total);
+end;
+$function$;
