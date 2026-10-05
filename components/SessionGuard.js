@@ -9,64 +9,81 @@ const WARNING_MS = 2 * 60 * 1000;
 
 export default function SessionGuard({ children }) {
   const router = useRouter();
-  const timerRef = useRef(null);
+  const idleTimerRef = useRef(null);
   const warningTimerRef = useRef(null);
+  const warningRef = useRef(false);
+  const activeRef = useRef(true);
   const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
-    let active = true;
+    activeRef.current = true;
 
     const clearTimers = () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+      idleTimerRef.current = null;
+      warningTimerRef.current = null;
+    };
+
+    const setWarning = (value) => {
+      warningRef.current = value;
+      setShowWarning(value);
     };
 
     const logout = async () => {
       clearTimers();
-      setShowWarning(false);
+      setWarning(false);
       await supabase.auth.signOut();
-      if (active) router.replace("/login?reason=inactive");
+      if (activeRef.current) router.replace("/login?reason=inactive");
     };
 
     const startIdleTimer = () => {
       clearTimers();
-      setShowWarning(false);
+      setWarning(false);
 
-      timerRef.current = setTimeout(() => {
-        setShowWarning(true);
+      idleTimerRef.current = setTimeout(() => {
+        setWarning(true);
         warningTimerRef.current = setTimeout(logout, WARNING_MS);
       }, IDLE_MS);
     };
 
     const activity = () => {
-      if (!showWarning) startIdleTimer();
+      if (!warningRef.current) startIdleTimer();
+    };
+
+    const continueSession = () => {
+      if (!warningRef.current) return;
+      startIdleTimer();
     };
 
     const events = ["pointerdown", "pointermove", "keydown", "touchstart", "scroll", "click"];
     events.forEach((event) => window.addEventListener(event, activity, { passive: true }));
+    window.addEventListener("studyhub-session-activity", continueSession);
 
     const { data: auth } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session || event === "SIGNED_OUT") {
         clearTimers();
-        setShowWarning(false);
+        setWarning(false);
         return;
       }
       startIdleTimer();
     });
 
-    startIdleTimer();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) startIdleTimer();
+    });
 
     return () => {
-      active = false;
+      activeRef.current = false;
       clearTimers();
       auth.subscription.unsubscribe();
       events.forEach((event) => window.removeEventListener(event, activity));
+      window.removeEventListener("studyhub-session-activity", continueSession);
     };
-  }, [router, showWarning]);
+  }, [router]);
 
   const continueSession = () => {
     if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-    setShowWarning(false);
     window.dispatchEvent(new Event("studyhub-session-activity"));
   };
 
