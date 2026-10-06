@@ -39,7 +39,13 @@ export async function POST(request) {
   const bodyResult = await readJsonBody(request, { maxBytes: 32768, maxKeys: 4 });
   if (!bodyResult.ok) return bodyResult.response;
 
-  const { conversationId, courseId, message } = bodyResult.body;
+  const { conversationId, courseId, message, mode } = bodyResult.body;
+
+  const allowedModes = ["chat", "explain", "teach", "summarize", "quiz", "step-by-step", "exam", "flashcards"];
+  if (mode !== undefined && (!allowedModes.includes(mode))) {
+    return jsonResponse({ error: "Invalid study mode." }, 400);
+  }
+  const studyMode = mode || "chat";
 
   const messageResult = validateText(message, {
     name: "message",
@@ -137,6 +143,17 @@ export async function POST(request) {
     return jsonResponse({ error: "Could not load AI conversation." }, 500);
   }
 
+  const modeInstructions = {
+    chat: "Answer normally and help the student learn.",
+    explain: "Explain the topic simply, then give an intuitive example and a short recap.",
+    teach: "Teach step by step. Ask the student to think along when useful, and build from basics to the harder idea.",
+    summarize: "Create a concise revision summary with key ideas, definitions, formulas, and common mistakes.",
+    quiz: "Act as a tutor quizmaster. Ask one question at a time unless the student explicitly asks for a full quiz. Do not reveal the answer before the student attempts it.",
+    "step-by-step": "Solve or explain the problem step by step. Show the reasoning and explain why each step is taken.",
+    exam: "Use exam-focused teaching: prioritize important concepts, likely question patterns, formulas, marking-friendly steps, and quick revision.",
+    flashcards: "Create study flashcards. Use exactly this format for each card: Q: question on one line, A: answer on the next line. Make 8-12 useful cards unless the student specifies another number. Do not add commentary before or after the cards.",
+  };
+
   const userMessage = {
     role: "user",
     content: messageResult.value,
@@ -148,7 +165,8 @@ export async function POST(request) {
       content:
         "You are Study Hub Student AI, a helpful study assistant. " +
         "Explain concepts clearly, use examples when useful, and help students learn rather than simply giving answers. " +
-        "Do not claim certainty when you are unsure. Keep responses focused and suitable for a student.",
+        "Do not claim certainty when you are unsure. Keep responses focused and suitable for a student. " +
+        "Current study mode: " + studyMode + ". " + modeInstructions[studyMode],
     },
     ...(history || [])
       .reverse()
@@ -254,7 +272,7 @@ export async function POST(request) {
       userId: auth.user.id,
       event: "ai_chat_success",
       request,
-      metadata: { conversation_id: conversation.id, model: MODEL },
+      metadata: { conversation_id: conversation.id, model: MODEL, mode: studyMode },
     });
 
     return jsonResponse({
