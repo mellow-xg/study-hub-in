@@ -68,6 +68,33 @@ export async function POST(request) {
 
   const service = createServiceClient();
 
+  let studySources = [];
+  if (useCourseContext || resourceId) {
+    let contextQuery = service.from("chapters")
+      .select("id,course_id,title,resources!inner(id,title,description,type,url,status)")
+      .eq("status", "published")
+      .eq("resources.status", "published");
+    if (courseId) contextQuery = contextQuery.eq("course_id", courseId);
+    const { data: contextChapters, error: contextError } = await contextQuery;
+    if (contextError) return jsonResponse({ error: "Could not load course context." }, 500);
+    for (const chapter of contextChapters || []) {
+      for (const resource of chapter.resources || []) {
+        if (!resourceId || resource.id === resourceId) {
+          studySources.push({
+            id: resource.id,
+            title: resource.title,
+            description: resource.description,
+            type: resource.type,
+            url: resource.url,
+            chapterTitle: chapter.title,
+          });
+        }
+      }
+    }
+    if (resourceId && !studySources.length) return jsonResponse({ error: "Resource context is unavailable." }, 400);
+    studySources = studySources.slice(0, 20);
+  }
+
   if (courseId) {
     const { data: course, error: courseError } = await service
       .from("courses")
