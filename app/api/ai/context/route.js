@@ -1,4 +1,4 @@
-import { consumeRateLimit, createServiceClient, jsonResponse, readJsonBody, requireAuth } from "../../../../lib/server/security";
+import { consumeRateLimit, jsonResponse, readJsonBody, requireAuth } from "../../../../lib/server/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -7,7 +7,7 @@ export async function POST(request) {
   const auth = await requireAuth(request);
   if (!auth.ok) return auth.response;
 
-  const rate = await consumeRateLimit({ userId: auth.user.id, bucket: "ai_context", limit: 30, windowSeconds: 600 });
+  const rate = await consumeRateLimit({ userId: auth.user.id, bucket: "ai_context", limit: 30, windowSeconds: 600, client: auth.client });
   if (!rate.allowed) return jsonResponse({ error: "AI context rate limit reached. Try again later." }, 429);
 
   const bodyResult = await readJsonBody(request, { maxBytes: 8192, maxKeys: 2 });
@@ -21,14 +21,14 @@ export async function POST(request) {
     }
   }
 
-  const service = createServiceClient();
-  let courseQuery = service.from("courses").select("id,title,slug,description").eq("status", "published");
+  const client = auth.client;
+  let courseQuery = client.from("courses").select("id,title,slug,description").eq("status", "published");
   if (courseId) courseQuery = courseQuery.eq("id", courseId);
   const { data: courses, error: courseError } = await courseQuery;
   if (courseError || (courseId && !courses?.length)) return jsonResponse({ error: "Course not found." }, 404);
 
   const selectedCourseIds = new Set((courses || []).map((c) => c.id));
-  let chapterQuery = service.from("chapters")
+  let chapterQuery = client.from("chapters")
     .select("id,course_id,title,position,resources!inner(id,title,description,type,url,position,status)")
     .eq("status", "published").eq("resources.status", "published").order("position");
   if (courseId) chapterQuery = chapterQuery.eq("course_id", courseId);
@@ -63,8 +63,8 @@ export async function POST(request) {
   let bookmarks = [];
   if (resourceIds.length) {
     const [{ data: progressData }, { data: bookmarkData }] = await Promise.all([
-      service.from("progress").select("resource_id,completed_at").eq("user_id", auth.user.id).in("resource_id", resourceIds),
-      service.from("bookmarks").select("resource_id").eq("profile_id", auth.user.id).in("resource_id", resourceIds),
+      client.from("progress").select("resource_id,completed_at").eq("user_id", auth.user.id).in("resource_id", resourceIds),
+      client.from("bookmarks").select("resource_id").eq("profile_id", auth.user.id).in("resource_id", resourceIds),
     ]);
     progress = progressData || [];
     bookmarks = bookmarkData || [];
@@ -78,11 +78,11 @@ export async function POST(request) {
     return { id: chapter.id, title: chapter.title, done, total: chapter.total, pct };
   }).filter((topic) => topic.total > 0).sort((a, b) => a.pct - b.pct);
 
-  const { data: quizList } = await service.from("quizzes").select("id,title,course_id").eq("status", "published");
+  const { data: quizList } = await client.from("quizzes").select("id,title,course_id").eq("status", "published");
   const quizIds = (quizList || []).filter((q) => selectedCourseIds.has(q.course_id)).map((q) => q.id);
   let quizPerformance = [];
   if (quizIds.length) {
-    const { data: attempts } = await service.from("quiz_attempts").select("quiz_id,score,total,completed_at")
+    const { data: attempts } = await client.from("quiz_attempts").select("quiz_id,score,total,completed_at")
       .eq("user_id", auth.user.id).in("quiz_id", quizIds).order("completed_at", { ascending: false });
     const best = {};
     for (const attempt of attempts || []) {
@@ -108,3 +108,4 @@ export async function POST(request) {
     quizPerformance: quizPerformance.slice(0, 5),
   });
 }
+

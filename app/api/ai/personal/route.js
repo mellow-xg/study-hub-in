@@ -1,6 +1,5 @@
 import {
   consumeRateLimit,
-  createServiceClient,
   jsonResponse,
   readJsonBody,
   requireAuth,
@@ -28,29 +27,28 @@ function calculateStreak(dates) {
   return streak;
 }
 
-async function getPersonalData(userId, courseId) {
-  const service = createServiceClient();
+async function getPersonalData(client, userId, courseId) {
   let course = null;
   let chapterIds = null;
 
   if (courseId) {
-    const { data, error } = await service.from("courses").select("id,title,description").eq("id", courseId).eq("status", "published").maybeSingle();
+    const { data, error } = await client.from("courses").select("id,title,description").eq("id", courseId).eq("status", "published").maybeSingle();
     if (error || !data) return { error: "Course not found." };
     course = data;
-    const { data: chapters } = await service.from("chapters").select("id").eq("course_id", courseId).eq("status", "published");
+    const { data: chapters } = await client.from("chapters").select("id").eq("course_id", courseId).eq("status", "published");
     chapterIds = (chapters || []).map((c) => c.id);
   }
 
-  let resourcesQuery = service.from("resources").select("id,chapter_id").eq("status", "published");
+  let resourcesQuery = client.from("resources").select("id,chapter_id").eq("status", "published");
   if (chapterIds) {
     resourcesQuery = chapterIds.length ? resourcesQuery.in("chapter_id", chapterIds) : resourcesQuery.eq("chapter_id", "00000000-0000-0000-0000-000000000000");
   }
 
   const [{ data: resources }, { data: progress }, { data: attempts }, { data: quizzes }] = await Promise.all([
     resourcesQuery,
-    service.from("progress").select("resource_id,completed_at").eq("user_id", userId),
-    service.from("quiz_attempts").select("quiz_id,score,total,completed_at").eq("user_id", userId).order("completed_at", { ascending: false }).limit(100),
-    service.from("quizzes").select("id,title,course_id").eq("status", "published"),
+    client.from("progress").select("resource_id,completed_at").eq("user_id", userId),
+    client.from("quiz_attempts").select("quiz_id,score,total,completed_at").eq("user_id", userId).order("completed_at", { ascending: false }).limit(100),
+    client.from("quizzes").select("id,title,course_id").eq("status", "published"),
   ]);
 
   const resourceIds = new Set((resources || []).map((r) => r.id));
@@ -81,11 +79,11 @@ export async function GET(request) {
   const courseId = url.searchParams.get("courseId") || "";
   if (courseId && !/^[0-9a-f-]{36}$/i.test(courseId)) return jsonResponse({ error: "Invalid courseId." }, 400);
 
-  const service = createServiceClient();
+  const client = auth.client;
   const [personal, plans, saved] = await Promise.all([
-    getPersonalData(auth.user.id, courseId || null),
-    service.from("ai_study_plans").select("id,course_id,title,goal,status,plan,created_at,updated_at").eq("user_id", auth.user.id).eq("status", "active").order("updated_at", { ascending: false }).limit(5),
-    service.from("ai_saved_answers").select("id,title,content,conversation_id,created_at").eq("user_id", auth.user.id).order("created_at", { ascending: false }).limit(10),
+    getPersonalData(client, auth.user.id, courseId || null),
+    client.from("ai_study_plans").select("id,course_id,title,goal,status,plan,created_at,updated_at").eq("user_id", auth.user.id).eq("status", "active").order("updated_at", { ascending: false }).limit(5),
+    client.from("ai_saved_answers").select("id,title,content,conversation_id,created_at").eq("user_id", auth.user.id).order("created_at", { ascending: false }).limit(10),
   ]);
   if (personal.error) return jsonResponse({ error: personal.error }, 404);
   return jsonResponse({ ...personal, plans: plans.data || [], savedAnswers: saved.data || [] });
@@ -94,7 +92,7 @@ export async function GET(request) {
 export async function POST(request) {
   const auth = await requireAuth(request);
   if (!auth.ok) return auth.response;
-  const rate = await consumeRateLimit({ userId: auth.user.id, bucket: "ai_personal_plan", limit: 5, windowSeconds: 600 });
+  const rate = await consumeRateLimit({ userId: auth.user.id, bucket: "ai_personal_plan", limit: 5, windowSeconds: 600, client: auth.client });
   if (!rate.allowed) return jsonResponse({ error: "Personal plan rate limit reached. Try again later." }, 429);
 
   const bodyResult = await readJsonBody(request, { maxBytes: 8192, maxKeys: 2 });
@@ -107,7 +105,7 @@ export async function POST(request) {
     return jsonResponse({ error: "Invalid courseId." }, 400);
   }
 
-  const personal = await getPersonalData(auth.user.id, courseId || null);
+  const personal = await getPersonalData(auth.client, auth.user.id, courseId || null);
   if (personal.error) return jsonResponse({ error: personal.error }, 404);
   const fallback = Array.from({ length: 7 }, (_, i) => ({
     day: i + 1,
@@ -158,8 +156,7 @@ export async function POST(request) {
       tasks: Array.isArray(item?.tasks) ? item.tasks.slice(0, 4).map((t) => String(t).slice(0, 300)) : fallback[index].tasks,
     }));
 
-    const service = createServiceClient();
-    const { data, error } = await service.from("ai_study_plans").insert({
+    const { data, error } = await auth.client.from("ai_study_plans").insert({
       user_id: auth.user.id, course_id: courseId || null, title: "7-Day Study Plan", goal: goalResult.value, plan,
     }).select("id,course_id,title,goal,status,plan,created_at,updated_at").single();
     if (error) {
@@ -173,3 +170,4 @@ export async function POST(request) {
     return jsonResponse({ error: "Study plan is temporarily unavailable." }, 504);
   }
 }
+

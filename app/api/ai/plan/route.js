@@ -1,4 +1,4 @@
-import { consumeRateLimit, createServiceClient, jsonResponse, readJsonBody, requireAuth, validateText } from "../../../../lib/server/security";
+import { consumeRateLimit, jsonResponse, readJsonBody, requireAuth, validateText } from "../../../../lib/server/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,27 +39,27 @@ function buildPlan({ goal, course, topics, resources, quizPerformance }) {
 export async function GET(request) {
   const auth = await requireAuth(request);
   if (!auth.ok) return auth.response;
-  const rate = await consumeRateLimit({ userId: auth.user.id, bucket: "ai_analytics", limit: 30, windowSeconds: 600 });
+  const rate = await consumeRateLimit({ userId: auth.user.id, bucket: "ai_analytics", limit: 30, windowSeconds: 600, client: auth.client });
   if (!rate.allowed) return jsonResponse({ error: "Analytics rate limit reached. Try again later." }, 429);
 
-  const service = createServiceClient();
+  const client = auth.client;
   const { searchParams } = new URL(request.url);
   const courseId = searchParams.get("courseId") || "";
   if (courseId && !/^[0-9a-f-]{36}$/i.test(courseId)) return jsonResponse({ error: "Invalid courseId." }, 400);
 
-  let courseQuery = service.from("courses").select("id,title,slug").eq("status", "published");
+  let courseQuery = client.from("courses").select("id,title,slug").eq("status", "published");
   if (courseId) courseQuery = courseQuery.eq("id", courseId);
   const { data: courses, error: courseError } = await courseQuery;
   if (courseError || (courseId && !courses?.length)) return jsonResponse({ error: "Course not found." }, 404);
   const selectedIds = (courses || []).map((c) => c.id);
 
-  const { data: chapters } = await service.from("chapters")
+  const { data: chapters } = await client.from("chapters")
     .select("id,course_id,title,position,resources!inner(id,title,status)")
     .eq("status", "published").eq("resources.status", "published");
   const relevantChapters = (chapters || []).filter((c) => selectedIds.includes(c.course_id));
   const resourceIds = relevantChapters.flatMap((c) => (c.resources || []).map((r) => r.id));
   const { data: progress } = resourceIds.length
-    ? await service.from("progress").select("resource_id,completed_at").eq("user_id", auth.user.id).in("resource_id", resourceIds)
+    ? await client.from("progress").select("resource_id,completed_at").eq("user_id", auth.user.id).in("resource_id", resourceIds)
     : { data: [] };
   const completed = new Set((progress || []).map((p) => p.resource_id));
 
@@ -69,17 +69,17 @@ export async function GET(request) {
     return { id: c.id, title: c.title, done, total: rs.length, pct: rs.length ? Math.round(done * 100 / rs.length) : 0 };
   }).filter((t) => t.total).sort((a, b) => a.pct - b.pct);
 
-  const { data: quizzes } = await service.from("quizzes").select("id,title,course_id").eq("status", "published");
+  const { data: quizzes } = await client.from("quizzes").select("id,title,course_id").eq("status", "published");
   const quizIds = (quizzes || []).filter((q) => selectedIds.includes(q.course_id)).map((q) => q.id);
   const { data: attempts } = quizIds.length
-    ? await service.from("quiz_attempts").select("quiz_id,score,total,completed_at").eq("user_id", auth.user.id).in("quiz_id", quizIds).order("completed_at", { ascending: false })
+    ? await client.from("quiz_attempts").select("quiz_id,score,total,completed_at").eq("user_id", auth.user.id).in("quiz_id", quizIds).order("completed_at", { ascending: false })
     : { data: [] };
   const best = {};
   for (const a of attempts || []) best[a.quiz_id] = Math.max(best[a.quiz_id] || 0, a.total ? Math.round(a.score * 100 / a.total) : 0);
   const quizPerformance = (quizzes || []).filter((q) => best[q.id] !== undefined).map((q) => ({ id: q.id, title: q.title, best: best[q.id] })).sort((a,b) => a.best-b.best);
 
-  const { data: activity } = await service.from("last_activity").select("opened_at").eq("user_id", auth.user.id);
-  const { data: recentProgress } = await service.from("progress").select("completed_at").eq("user_id", auth.user.id).order("completed_at", { ascending: false }).limit(100);
+  const { data: activity } = await client.from("last_activity").select("opened_at").eq("user_id", auth.user.id);
+  const { data: recentProgress } = await client.from("progress").select("completed_at").eq("user_id", auth.user.id).order("completed_at", { ascending: false }).limit(100);
   const dates = new Set([...(activity || []).map(x => dayKey(x.opened_at)), ...(recentProgress || []).map(x => dayKey(x.completed_at))]);
   let streak = 0;
   const cursor = new Date();
@@ -105,7 +105,7 @@ export async function GET(request) {
 export async function POST(request) {
   const auth = await requireAuth(request);
   if (!auth.ok) return auth.response;
-  const rate = await consumeRateLimit({ userId: auth.user.id, bucket: "ai_planner", limit: 10, windowSeconds: 600 });
+  const rate = await consumeRateLimit({ userId: auth.user.id, bucket: "ai_planner", limit: 10, windowSeconds: 600, client: auth.client });
   if (!rate.allowed) return jsonResponse({ error: "Planner rate limit reached. Try again later." }, 429);
   const bodyResult = await readJsonBody(request, { maxBytes: 8192, maxKeys: 3 });
   if (!bodyResult.ok) return bodyResult.response;
@@ -116,18 +116,18 @@ export async function POST(request) {
     return jsonResponse({ error: "Invalid courseId." }, 400);
   }
 
-  const service = createServiceClient();
+  const client = auth.client;
   let course = null;
   if (courseId) {
-    const { data } = await service.from("courses").select("id,title").eq("id", courseId).eq("status","published").maybeSingle();
+    const { data } = await client.from("courses").select("id,title").eq("id", courseId).eq("status","published").maybeSingle();
     if (!data) return jsonResponse({ error: "Course not found." }, 404);
     course = data;
   }
-  const { data: chapters } = await service.from("chapters").select("id,title,course_id,resources!inner(id,title,status)")
+  const { data: chapters } = await client.from("chapters").select("id,title,course_id,resources!inner(id,title,status)")
     .eq("status","published").eq("resources.status","published");
   const selected = (chapters || []).filter(c => !courseId || c.course_id === courseId);
   const resourceIds = selected.flatMap(c => (c.resources || []).map(r => r.id));
-  const { data: progress } = resourceIds.length ? await service.from("progress").select("resource_id").eq("user_id",auth.user.id).in("resource_id",resourceIds) : {data:[]};
+  const { data: progress } = resourceIds.length ? await client.from("progress").select("resource_id").eq("user_id",auth.user.id).in("resource_id",resourceIds) : {data:[]};
   const completed = new Set((progress || []).map(p => p.resource_id));
   const topics = selected.map(c => {
     const rs=c.resources||[], done=rs.filter(r=>completed.has(r.id)).length;
@@ -135,10 +135,11 @@ export async function POST(request) {
   }).filter(t=>t.total).sort((a,b)=>a.pct-b.pct);
   const plan = buildPlan({ goal: goalResult.value, course, topics, resources: resourceIds, quizPerformance: [] });
 
-  const { data: saved, error } = await service.from("ai_study_plans").insert({
+  const { data: saved, error } = await client.from("ai_study_plans").insert({
     user_id: auth.user.id, course_id: course?.id || null, title: course ? course.title + " plan" : "My study plan",
     goal: goalResult.value, status: "active", plan,
   }).select("id,title,goal,status,plan,created_at,updated_at").single();
   if (error) return jsonResponse({ error: "Could not save study plan." }, 500);
   return jsonResponse({ plan: saved }, 201);
 }
+
