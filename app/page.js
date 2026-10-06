@@ -9,7 +9,7 @@ import CourseArtwork, { getCoursePresentation } from "../components/CourseArtwor
 
 const quickActions = [
   { href: "#courses", icon: "📚", label: "Courses", tone: "violet" },
-  { href: "/study-tools", icon: "★", label: "Study Tools", tone: "violet" },
+  { href: "/ai", icon: "✦", label: "Student AI", tone: "violet" },
   { href: "/quizzes", icon: "🧠", label: "Quiz Center", tone: "pink" },
   { href: "#progress", icon: "📈", label: "Progress", tone: "blue" },
   { href: "#recent", icon: "🕘", label: "Recent", tone: "amber" },
@@ -227,7 +227,7 @@ export default function HomePage() {
             </div>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="desktop-links"><a href="#courses">Courses</a><Link href="/quizzes">Quizzes</Link><Link href="/study-tools">Study tools</Link></div>
+            <div className="desktop-links"><a href="#courses">Courses</a><Link href="/quizzes">Quizzes</Link><Link href="/ai">Student AI</Link><Link href="/study-tools">Study tools</Link></div>
             <Link href="/profile" className="compact-action hidden sm:inline-flex">Profile</Link>
             <button onClick={toggleDarkMode} className="icon-button" aria-label="Toggle theme">{darkMode ? "☀️" : "🌙"}</button>
             {profile?.role === "admin" && <Link href="/admin" className="hidden sm:inline-flex compact-action">Admin</Link>}
@@ -248,7 +248,7 @@ export default function HomePage() {
               A focused place for your lectures, notes, quizzes, and progress. Choose a subject and keep moving.
             </p>
             <div className="flex flex-wrap gap-2 mt-5">
-              <Link href="/quizzes" className="hero-button">🧠 Take a quiz</Link>
+              <Link href="/ai" className="hero-button">✦ Ask Student AI</Link><Link href="/quizzes" className="hero-button hero-button-muted">🧠 Take a quiz</Link>
               <a href="#courses" className="hero-button hero-button-muted">📚 Browse courses</a>
             </div>
           </div>

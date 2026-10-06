@@ -1,5 +1,6 @@
 import "./globals.css";
 import StudyHubGestures from "../components/StudyHubGestures";
+import SessionGuard from "../components/SessionGuard";
 import OfflineCache from "../components/OfflineCache";
 
 export const metadata = {
@@ -13,19 +14,20 @@ export default function RootLayout({ children }) {
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                const theme = localStorage.getItem("theme");
-                if (theme === "dark") document.documentElement.classList.add("dark");
-              } catch (e) {}
-            `
+            __html: `try {
+              const theme = localStorage.getItem("theme");
+              if (theme === "dark") document.documentElement.classList.add("dark");
+            } catch (e) {}`
           }}
         />
       </head>
       <body>
-        <StudyHubGestures>{children}</StudyHubGestures>
+        <SessionGuard>
+          <StudyHubGestures>{children}</StudyHubGestures>
+        </SessionGuard>
         <OfflineCache />
       </body>
     </html>
   );
 }
+
