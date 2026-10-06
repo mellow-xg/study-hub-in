@@ -1,5 +1,6 @@
 import {
   consumeRateLimit,
+  createServiceClient,
   jsonResponse,
   readJsonBody,
   requireAuth,
@@ -59,7 +60,7 @@ export async function POST(request) {
     return jsonResponse({ error: "Invalid courseId." }, 400);
   }
 
-  const service = auth.client;
+  const service = createServiceClient();
   let conversation;
 
   if (conversationId) {
