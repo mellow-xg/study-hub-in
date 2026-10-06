@@ -36,7 +36,7 @@ export async function POST(request) {
     return jsonResponse({ error: "AI rate limit reached. Try again later." }, 429);
   }
 
-  const bodyResult = await readJsonBody(request, { maxBytes: 32768, maxKeys: 4 });
+  const bodyResult = await readJsonBody(request, { maxBytes: 32768, maxKeys: 6 });
   if (!bodyResult.ok) return bodyResult.response;
 
   const { conversationId, courseId, message, mode, resourceId, useCourseContext } = bodyResult.body;
@@ -193,7 +193,11 @@ export async function POST(request) {
         "You are Study Hub Student AI, a helpful study assistant. " +
         "Explain concepts clearly, use examples when useful, and help students learn rather than simply giving answers. " +
         "Do not claim certainty when you are unsure. Keep responses focused and suitable for a student. " +
-        "Current study mode: " + studyMode + ". " + modeInstructions[studyMode],
+        "Current study mode: " + studyMode + ". " + modeInstructions[studyMode] +
+        (studySources.length ? " Use the following Study Hub sources for course-specific claims. Cite them inline as [S1], [S2], etc. Never invent source IDs.\\n\\n" +
+          studySources.map((source, index) =>
+            "[S" + (index + 1) + "] " + source.title + " | Chapter: " + source.chapterTitle + " | Type: " + source.type + " | Description: " + (source.description || "")
+          ).join("\\n") : ""),
     },
     ...(history || [])
       .reverse()
