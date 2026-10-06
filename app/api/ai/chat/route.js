@@ -39,7 +39,7 @@ export async function POST(request) {
   const bodyResult = await readJsonBody(request, { maxBytes: 32768, maxKeys: 4 });
   if (!bodyResult.ok) return bodyResult.response;
 
-  const { conversationId, courseId, message, mode } = bodyResult.body;
+  const { conversationId, courseId, message, mode, resourceId, useCourseContext } = bodyResult.body;
 
   const allowedModes = ["chat", "explain", "teach", "summarize", "quiz", "step-by-step", "exam", "flashcards"];
   if (mode !== undefined && (!allowedModes.includes(mode))) {
