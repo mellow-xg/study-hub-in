@@ -39,7 +39,10 @@ export default function StudentAIPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [copiedId, setCopiedId] = useState(null);\n  const [activeMode, setActiveMode] = useState("chat");\n  const [flashcards, setFlashcards] = useState([]);\n  const [flashcardIndex, setFlashcardIndex] = useState(0);
+  const [copiedId, setCopiedId] = useState(null);
+  const [activeMode, setActiveMode] = useState("chat");
+  const [flashcards, setFlashcards] = useState([]);
+  const [flashcardIndex, setFlashcardIndex] = useState(0);
   const selectedCourse = useMemo(() => courses.find((c) => c.id === courseId), [courses, courseId]);
 
   async function loadConversations(userId) {
