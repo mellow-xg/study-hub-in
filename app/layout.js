@@ -1,6 +1,7 @@
 import "./globals.css";
 import StudyHubGestures from "../components/StudyHubGestures";
 import SessionGuard from "../components/SessionGuard";
+import OfflineCache from "../components/OfflineCache";
 
 export const metadata = {
   title: "Study Hub",
@@ -24,7 +25,9 @@ export default function RootLayout({ children }) {
         <SessionGuard>
           <StudyHubGestures>{children}</StudyHubGestures>
         </SessionGuard>
+        <OfflineCache />
       </body>
     </html>
   );
 }
+
