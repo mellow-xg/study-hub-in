@@ -61,6 +61,19 @@ export async function POST(request) {
   }
 
   const service = createServiceClient();
+
+  if (courseId) {
+    const { data: course, error: courseError } = await service
+      .from("courses")
+      .select("id")
+      .eq("id", courseId)
+      .eq("status", "published")
+      .maybeSingle();
+
+    if (courseError || !course) {
+      return jsonResponse({ error: "Course context is unavailable." }, 400);
+    }
+  }
   let conversation;
 
   if (conversationId) {
