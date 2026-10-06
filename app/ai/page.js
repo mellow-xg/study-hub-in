@@ -43,7 +43,54 @@ export default function StudentAIPage() {
   const [activeMode, setActiveMode] = useState("chat");
   const [flashcards, setFlashcards] = useState([]);
   const [flashcardIndex, setFlashcardIndex] = useState(0);
+  const [contextSources, setContextSources] = useState([]);
+  const [contextEnabled, setContextEnabled] = useState(true);
+  const [focusResourceId, setFocusResourceId] = useState("");
+  const [resourceSearch, setResourceSearch] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [weakTopics, setWeakTopics] = useState([]);
+  const [progressSummary, setProgressSummary] = useState(null);
+  const [searching, setSearching] = useState(false);
   const selectedCourse = useMemo(() => courses.find((c) => c.id === courseId), [courses, courseId]);
+
+  async function loadContext(selectedCourseId) {
+    if (!user) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      const response = await fetch("/api/ai/context", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + session.access_token },
+        body: JSON.stringify({ courseId: selectedCourseId || undefined }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) return;
+      setContextSources(payload.sources || []);
+      setWeakTopics(payload.weakTopics || []);
+      setProgressSummary(payload.progress || null);
+    } catch {}
+  }
+
+  async function searchResources() {
+    const query = resourceSearch.trim();
+    if (query.length < 2) { setSearchResults([]); return; }
+    setSearching(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      const response = await fetch("/api/ai/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + session.access_token },
+        body: JSON.stringify({ query, courseId: courseId || undefined }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      setSearchResults(response.ok ? (payload.results || []) : []);
+    } catch {
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  }
 
   async function loadConversations(userId) {
     const { data } = await supabase.from("ai_conversations").select("id, course_id, title, created_at, updated_at")
@@ -98,6 +145,7 @@ export default function StudentAIPage() {
   }, [router]);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
+  useEffect(() => { if (user) loadContext(courseId); }, [courseId, user]);
 
   async function sendMessage(text = input, selectedMode = activeMode) {
     const message = text.trim();
@@ -111,12 +159,13 @@ export default function StudentAIPage() {
       const response = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + session.access_token },
-        body: JSON.stringify({ message, conversationId: conversationId || undefined, courseId: courseId || undefined, mode: selectedMode }),
+        body: JSON.stringify({ message, conversationId: conversationId || undefined, courseId: courseId || undefined, mode: selectedMode, resourceId: focusResourceId || undefined, useCourseContext: contextEnabled }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Student AI could not answer.");
       if (!conversationId) setConversationId(payload.conversationId);
       const assistantContent = payload.message.content;
+      if (payload.sources) setContextSources(payload.sources);
       if (selectedMode === "flashcards") {
         const cards = [];
         const matches = assistantContent.match(/Q:\s*(.+)\nA:\s*([\\s\\S]*?)(?=\nQ:|$)/g) || [];
@@ -190,9 +239,28 @@ export default function StudentAIPage() {
                 <option value="">General Study Hub</option>
                 {courses.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}
               </select>
+              <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                <div className="flex-1 relative">
+                  <input value={resourceSearch} onChange={(e) => setResourceSearch(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); searchResources(); } }} placeholder="Search your course resources…" className="search-box w-full" />
+                  {searching && <span className="absolute right-3 top-2.5 text-[10px] text-gray-400">Searching…</span>}
+                  {searchResults.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 z-40 rounded-2xl border dark:border-white/10 bg-white dark:bg-[#222234] shadow-xl p-2 max-h-72 overflow-y-auto">
+                      {searchResults.map((result) => (
+                        <button key={result.id} onClick={() => { setFocusResourceId(result.id); setContextEnabled(true); setInput("Explain " + result.title); setSearchResults([]); setResourceSearch(""); }} className="w-full text-left rounded-xl px-3 py-2 hover:bg-gray-50 dark:hover:bg-white/5">
+                          <p className="text-xs font-bold text-ink dark:text-white">{result.title}</p>
+                          <p className="text-[10px] text-gray-500">{result.courseTitle} · {result.chapterTitle} · {result.type}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <button onClick={() => setContextEnabled((v) => !v)} className={"compact-action " + (contextEnabled ? "ring-2 ring-accent/20" : "")}>
+                  {contextEnabled ? "📚 Resources on" : "📚 Resources off"}
+                </button>
+              </div>
               <div className="flex gap-2 overflow-x-auto mt-3 no-scrollbar">
-                {MODES.map(([label, prompt]) => (
-                  <button key={label} onClick={() => setInput(prompt + (selectedCourse ? " for " + selectedCourse.title : ""))} className="filter-chip whitespace-nowrap">{label}</button>
+                {MODES.map(([label, prompt, mode]) => (
+                  <button key={label} onClick={() => { setActiveMode(mode); setInput(prompt + (selectedCourse ? " for " + selectedCourse.title : "")); }} className={"filter-chip whitespace-nowrap " + (activeMode === mode ? "ring-2 ring-accent/30" : "")}>{label}</button>
                 ))}
               </div>
             </div>
@@ -222,6 +290,31 @@ export default function StudentAIPage() {
                   <div className="flex justify-between mt-4">
                     <button disabled={flashcardIndex === 0} onClick={() => setFlashcardIndex((i) => Math.max(0, i - 1))} className="compact-action disabled:opacity-40">← Previous</button>
                     <button disabled={flashcardIndex === flashcards.length - 1} onClick={() => setFlashcardIndex((i) => Math.min(flashcards.length - 1, i + 1))} className="compact-action disabled:opacity-40">Next →</button>
+                  </div>
+                </div>
+              )}
+              {contextSources.length > 0 && (
+                <div className="max-w-3xl mx-auto mb-5 rounded-2xl border dark:border-white/10 bg-gray-50 dark:bg-[#151522] p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-black tracking-wider text-accent">STUDY HUB SOURCES</p>
+                    {progressSummary && <span className="text-[10px] text-gray-500">{progressSummary.pct}% course progress</span>}
+                  </div>
+                  <div className="mt-2 flex gap-2 overflow-x-auto no-scrollbar">
+                    {contextSources.slice(0, 6).map((source, index) => (
+                      <button key={source.id} onClick={() => { setFocusResourceId(source.id); setInput("Explain " + source.title); }} className="min-w-44 max-w-56 text-left rounded-xl bg-white dark:bg-[#222234] border dark:border-white/10 px-3 py-2">
+                        <p className="text-[10px] font-black text-accent">{source.citation || "[S" + (index + 1) + "]"}</p>
+                        <p className="text-xs font-bold truncate text-ink dark:text-white">{source.title}</p>
+                        <p className="text-[10px] text-gray-500 truncate">{source.chapterTitle}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {weakTopics.length > 0 && (
+                <div className="max-w-3xl mx-auto mb-5 rounded-2xl border dark:border-white/10 px-4 py-3">
+                  <p className="text-[11px] font-black tracking-wider text-accent">TOPICS TO REVIEW</p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {weakTopics.map((topic) => <button key={topic.id} onClick={() => { setInput("Teach me " + topic.title); setActiveMode("teach"); }} className="filter-chip">{topic.title} · {topic.pct}%</button>)}
                   </div>
                 </div>
               )}
