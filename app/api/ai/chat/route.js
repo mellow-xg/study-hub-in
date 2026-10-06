@@ -320,6 +320,10 @@ export async function POST(request) {
         role: "assistant",
         content: answerResult.value,
       },
+      sources: studySources.map((source, index) => ({
+        ...source,
+        citation: "[S" + (index + 1) + "]",
+      })),
     });
   } catch (error) {
     const aborted = error?.name === "AbortError";
