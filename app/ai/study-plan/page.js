@@ -75,10 +75,11 @@ export default function StudyPlanPage() {
         {plans.map((plan) => (
           <section key={plan.id} className="rounded-3xl bg-white dark:bg-[#1c1c2b] p-5">
             <div className="flex items-start justify-between gap-3"><div><p className="section-label">7-DAY PLAN</p><h2 className="text-xl font-black text-ink dark:text-white">{plan.title}</h2><p className="text-xs text-gray-500 mt-1">{plan.goal}</p></div><span className="text-xs rounded-full px-3 py-1 bg-green-100 text-green-700">Active</span></div>
-            <div className="grid md:grid-cols-2 gap-3 mt-5">{(plan.plan || []).map((day) => <article key={day.day} className="rounded-2xl border dark:border-white/10 p-4"><p className="text-xs font-black text-accent">DAY {day.day}</p><h3 className="font-extrabold text-ink dark:text-white mt-1">{day.focus}</h3><ul className="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-300">{(day.tasks || []).map((task, i) => <li key={i}>• {task}</li>)}</ul></article>)}</div>
+            <div className="grid md:grid-cols-2 gap-3 mt-5">{(plan.plan || []).map((day) => <article key={day.day} className="rounded-2xl border dark:border-white/10 p-4"><p className="text-xs font-black text-accent">DAY {day.day}</p><h3 className="font-extrabold text-ink dark:text-white mt-1">{day.focus || day.title}</h3><ul className="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-300">{(day.tasks || []).map((task, i) => <li key={i}>• {task}</li>)}</ul></article>)}</div>
           </section>
         ))}
       </main>
     </div>
   );
 }
+
