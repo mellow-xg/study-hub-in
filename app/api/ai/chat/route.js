@@ -61,7 +61,7 @@ export async function POST(request) {
     return jsonResponse({ error: "Invalid conversationId." }, 400);
   }
 
-  if (courseId !== undefined && courseId !== null &&
+  if (resourceId !== undefined && resourceId !== null && (typeof resourceId !== "string" || !/^[0-9a-f-]{36}$/i.test(resourceId))) {\n    return jsonResponse({ error: "Invalid resourceId." }, 400);\n  }\n\n  if (useCourseContext !== undefined && typeof useCourseContext !== "boolean") {\n    return jsonResponse({ error: "Invalid useCourseContext." }, 400);\n  }\n\n  if (courseId !== undefined && courseId !== null &&
       (typeof courseId !== "string" || !/^[0-9a-f-]{36}$/i.test(courseId))) {
     return jsonResponse({ error: "Invalid courseId." }, 400);
   }
