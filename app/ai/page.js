@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
 const MODES = [
-  ["Explain", "Explain a concept simply"],
-  ["Teach me", "Teach this step by step"],
-  ["Summarize", "Summarize the topic"],
-  ["Quiz me", "Quiz me on this topic"],
+  ["Explain", "Explain a concept simply", "explain"],
+  ["Teach me", "Teach this step by step", "teach"],
+  ["Summarize", "Summarize the topic", "summarize"],
+  ["Quiz me", "Quiz me on this topic", "quiz"],
+  ["Step-by-step", "Work through it step by step", "step-by-step"],
+  ["Exam mode", "Give exam-focused help", "exam"],
+  ["Flashcards", "Make revision flashcards", "flashcards"],
 ];
 
 function renderContent(content) {
@@ -36,7 +39,7 @@ export default function StudentAIPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [copiedId, setCopiedId] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);\n  const [activeMode, setActiveMode] = useState("chat");\n  const [flashcards, setFlashcards] = useState([]);\n  const [flashcardIndex, setFlashcardIndex] = useState(0);
   const selectedCourse = useMemo(() => courses.find((c) => c.id === courseId), [courses, courseId]);
 
   async function loadConversations(userId) {
@@ -93,7 +96,7 @@ export default function StudentAIPage() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
 
-  async function sendMessage(text = input) {
+  async function sendMessage(text = input, selectedMode = activeMode) {
     const message = text.trim();
     if (!message || sending) return;
     setError(""); setSending(true); setInput("");
@@ -105,12 +108,22 @@ export default function StudentAIPage() {
       const response = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + session.access_token },
-        body: JSON.stringify({ message, conversationId: conversationId || undefined, courseId: courseId || undefined }),
+        body: JSON.stringify({ message, conversationId: conversationId || undefined, courseId: courseId || undefined, mode: selectedMode }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Student AI could not answer.");
       if (!conversationId) setConversationId(payload.conversationId);
-      setMessages((prev) => [...prev, { id: "assistant-" + Date.now(), role: "assistant", content: payload.message.content, created_at: new Date().toISOString() }]);
+      const assistantContent = payload.message.content;
+      if (selectedMode === "flashcards") {
+        const cards = [];
+        const matches = assistantContent.match(/Q:\s*(.+)\nA:\s*([\\s\\S]*?)(?=\nQ:|$)/g) || [];
+        matches.forEach((block) => {
+          const m = block.match(/Q:\s*(.+)\nA:\s*([\\s\\S]*)/);
+          if (m) cards.push({ question: m[1].trim(), answer: m[2].trim() });
+        });
+        if (cards.length) { setFlashcards(cards); setFlashcardIndex(0); }
+      }
+      setMessages((prev) => [...prev, { id: "assistant-" + Date.now(), role: "assistant", content: assistantContent, created_at: new Date().toISOString(), mode: selectedMode }]);
       await loadConversations(user.id);
     } catch (err) {
       setMessages((prev) => prev.filter((item) => item.id !== optimisticId));
@@ -190,6 +203,22 @@ export default function StudentAIPage() {
                     {["Explain this topic simply", "Give me a step-by-step example", "Summarize what I should revise", "Quiz me on this subject"].map((prompt) => (
                       <button key={prompt} onClick={() => setInput(prompt)} className="rounded-2xl border dark:border-white/10 px-4 py-3 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/5">{prompt}</button>
                     ))}
+                  </div>
+                </div>
+              )}
+              {flashcards.length > 0 && (
+                <div className="max-w-3xl mx-auto mb-6 rounded-3xl border dark:border-white/10 bg-gradient-to-br from-white to-gray-50 dark:from-[#222234] dark:to-[#181827] p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div><p className="text-xs font-bold text-accent">FLASHCARD DECK</p><p className="font-black text-lg text-ink dark:text-white">{flashcardIndex + 1} / {flashcards.length}</p></div>
+                    <button onClick={() => { setFlashcards([]); setFlashcardIndex(0); }} className="text-xs text-gray-500">Close</button>
+                  </div>
+                  <div className="min-h-40 rounded-2xl bg-white dark:bg-[#29293b] p-6 flex flex-col justify-center">
+                    <p className="text-lg font-extrabold text-ink dark:text-white">{flashcards[flashcardIndex]?.question}</p>
+                    <details className="mt-5"><summary className="cursor-pointer text-sm font-bold text-accent">Show answer</summary><p className="mt-3 text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{flashcards[flashcardIndex]?.answer}</p></details>
+                  </div>
+                  <div className="flex justify-between mt-4">
+                    <button disabled={flashcardIndex === 0} onClick={() => setFlashcardIndex((i) => Math.max(0, i - 1))} className="compact-action disabled:opacity-40">← Previous</button>
+                    <button disabled={flashcardIndex === flashcards.length - 1} onClick={() => setFlashcardIndex((i) => Math.min(flashcards.length - 1, i + 1))} className="compact-action disabled:opacity-40">Next →</button>
                   </div>
                 </div>
               )}
