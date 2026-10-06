@@ -110,7 +110,7 @@ export async function POST(request) {
   const bodyResult = await readJsonBody(request, { maxBytes: 8192, maxKeys: 3 });
   if (!bodyResult.ok) return bodyResult.response;
   const { goal, courseId } = bodyResult.body;
-  const goalResult = validateText(goal, { min: 3, max: 1000 });
+  const goalResult = validateText(goal, { min: 3, max: 500 });
   if (!goalResult.ok) return jsonResponse({ error: goalResult.error }, 400);
   if (courseId !== undefined && courseId !== null && (typeof courseId !== "string" || !/^[0-9a-f-]{36}$/i.test(courseId))) {
     return jsonResponse({ error: "Invalid courseId." }, 400);
@@ -137,7 +137,7 @@ export async function POST(request) {
 
   const { data: saved, error } = await client.from("ai_study_plans").insert({
     user_id: auth.user.id, course_id: course?.id || null, title: course ? course.title + " plan" : "My study plan",
-    goal: goalResult.value, status: "active", plan,
+    goal: goalResult.value, status: "active", plan: plan.items,
   }).select("id,title,goal,status,plan,created_at,updated_at").single();
   if (error) return jsonResponse({ error: "Could not save study plan." }, 500);
   return jsonResponse({ plan: saved }, 201);
