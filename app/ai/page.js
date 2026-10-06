@@ -213,7 +213,7 @@ export default function StudentAIPage() {
             <p className="font-black text-ink dark:text-white">Student AI</p>
             <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{selectedCourse ? "Studying: " + selectedCourse.title : "Your study assistant"}</p>
           </div>
-          <Link href="/ai/study-plan" className="compact-action">Personal Learning</Link><button onClick={startNew} className="compact-action">＋ New chat</button>
+          <Link href="/ai/study-plan" className="compact-action">Personal Learning</Link><div className="flex items-center gap-2"><Link href="/ai/study" className="compact-action">📊 My Study</Link><button onClick={startNew} className="compact-action">＋ New chat</button></div>
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-3 sm:px-5 py-4">
@@ -324,7 +324,7 @@ export default function StudentAIPage() {
                     <div className={"max-w-[92%] sm:max-w-[82%] " + (message.role === "user" ? "rounded-3xl rounded-br-md bg-brand-gradient text-white" : "rounded-3xl rounded-bl-md bg-gray-100 dark:bg-[#29293b] text-ink dark:text-gray-100") + " px-4 py-3 text-sm leading-6"}>
                       <div className="break-words">{renderContent(message.content)}</div>
                       <div className={"mt-2 flex gap-2 text-[10px] " + (message.role === "user" ? "text-white/60 justify-end" : "text-gray-400")}>
-                        {message.role === "assistant" && <button onClick={() => copyMessage(message)}>{copiedId === message.id ? "Copied" : "Copy"}</button>}
+                        {message.role === "assistant" && <button onClick={() => copyMessage(message)}>{copiedId === message.id ? "Copied" : "Copy"}</button>}{message.role === "assistant" && <button onClick={async () => { await supabase.from("ai_saved_answers").insert({ user_id: user.id, conversation_id: conversationId || null, title: message.content.slice(0, 80), content: message.content }); }}>Save</button>}
                         {message.role === "assistant" && <button onClick={() => { const lastUser = [...messages].reverse().find(m => m.role === "user"); if (lastUser) sendMessage(lastUser.content); }}>Regenerate</button>}
                       </div>
                     </div>
