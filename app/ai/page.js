@@ -213,7 +213,7 @@ export default function StudentAIPage() {
             <p className="font-black text-ink dark:text-white">Student AI</p>
             <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{selectedCourse ? "Studying: " + selectedCourse.title : "Your study assistant"}</p>
           </div>
-          <button onClick={startNew} className="compact-action">＋ New chat</button>
+          <Link href="/ai/study-plan" className="compact-action">Personal Learning</Link><button onClick={startNew} className="compact-action">＋ New chat</button>
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-3 sm:px-5 py-4">
